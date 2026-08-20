@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>青云志 · 试玩</title>
+<style>
+  /* ========== 全局样式：水墨国风 ========== */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%; overflow: hidden;
+    background: #1a1a1a;
+    font-family: "KaiTi","STKaiti","楷体","SimSun","宋体",serif;
+    color: #f5f0e6;
+    user-select: none;
+  }
+  #gameCanvas {
+    display: block; position: absolute; top: 0; left: 0;
+    background: #2c2c2c;
+    cursor: crosshair;
+  }
+
+  /* ========== 通用面板：墨色半透明 + 朱砂描边 ========== */
+  .panel {
+    position: absolute;
+    background: rgba(20,20,20,0.78);
+    border: 1px solid #b83b3b;
+    border-radius: 6px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.6), inset 0 0 18px rgba(0,0,0,0.5);
+    color: #f5f0e6;
+  }
+
+  /* ========== 顶部 HUD ========== */
+  #hud {
+    top: 10px; left: 10px;
+    padding: 10px 14px;
+    min-width: 320px;
+    font-size: 14px;
+  }
+  .hud-row { display: flex; align-items: center; margin: 4px 0; gap: 8px; }
+  .hud-label { color: #6b8e7f; width: 44px; text-align: right; font-size: 13px; }
+  .bar {
+    position: relative; flex: 1; height: 16px;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid #4a6b7d;
+    border-radius: 3px; overflow: hidden;
+  }
+  .bar-fill { height: 100%; transition: width 0.2s ease; }
+  #hpFill { background: linear-gradient(90deg, #b83b3b, #d4574a); }
+  #mpFill { background: linear-gradient(90deg, #4a6b7d, #6b8e7f); }
+  #expFill { background: linear-gradient(90deg, #b89b3b, #f5d76e); }
+  .bar-text {
+    position: absolute; inset: 0; text-align: center;
+    font-size: 11px; line-height: 16px; color: #f5f0e6;
+    text-shadow: 0 0 2px #000;
+  }
+  .hud-info { display: flex; gap: 14px; margin-top: 6px; font-size: 13px; color: #f5f0e6; }
+  .hud-info span b { color: #f5d76e; }
+  #questBrief {
+    margin-top: 6px; padding-top: 6px;
+    border-top: 1px dashed #4a6b7d;
+    font-size: 12px; color: #6b8e7f;
+  }
+  #questBrief b { color: #f5d76e; }
+
+  /* ========== 技能栏 ========== */
+  #skillBar {
+    bottom: 14px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 10px; padding: 8px 12px;
+  }
+  .skill {
+    position: relative;
+    width: 52px; height: 52px;
+    border: 1px solid #4a6b7d; border-radius: 6px;
+    background: rgba(0,0,0,0.55);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-size: 12px; cursor: default;
+    overflow: hidden;
+  }
+  .skill .sk-name { color: #f5f0e6; font-size: 13px; }
+  .skill .sk-key { color: #b83b3b; font-size: 10px; position: absolute; top: 2px; left: 4px; }
+  .skill .sk-cost { color: #6b8e7f; font-size: 10px; }
+  .skill .cd-mask {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    transition: height 0.1s linear;
+    pointer-events: none;
+  }
+  .skill.ready { border-color: #b83b3b; }
+
+  /* ========== 小地图 ========== */
+  #minimap {
+    top: 10px; right: 10px;
+    width: 180px; height: 120px;
+    padding: 6px;
+  }
+  #minimap canvas { display: block; width: 100%; height: 100%; border-radius: 3px; }
+
+  /* ========== 操作提示 ========== */
+  #hint {
+    bottom: 14px; left: 10px;
+    padding: 8px 12px;
+    font-size: 12px; color: #6b8e7f;
+    line-height: 1.7;
+    max-width: 220px;
+  }
+  #hint b { color: #f5d76e; }
+
+  /* ========== 开始界面 ========== */
+  #startScreen {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, #2c2c2c 0%, #0e0e0e 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 100;
+  }
+  .title-wrap { text-align: center; position: relative; }
+  #gameTitle {
+    font-size: 72px; color: #f5f0e6;
+    letter-spacing: 12px;
+    text-shadow: 0 0 18px rgba(184,59,59,0.5), 2px 2px 4px #000;
+  }
+  #gameSubTitle {
+    margin-top: 10px; font-size: 18px; color: #6b8e7f;
+    letter-spacing: 6px;
+  }
+  /* 朱砂印章 */
+  .seal {
+    position: absolute; top: 8px; right: -70px;
+    width: 56px; height: 56px;
+    background: #b83b3b;
+    border: 2px solid #8a2a2a;
+    display: flex; align-items: center; justify-content: center;
+    color: #f5f0e6; font-size: 22px; line-height: 1.1;
+    writing-mode: vertical-rl;
+    border-radius: 4px;
+    box-shadow: 0 0 8px rgba(184,59,59,0.6);
+    transform: rotate(-4deg);
+    font-weight: bold;
+  }
+  #startBtn {
+    margin-top: 50px;
+    padding: 14px 60px;
+    background: linear-gradient(180deg, #b83b3b, #8a2a2a);
+    border: 1px solid #f5d76e;
+    color: #f5f0e6;
+    font-family: inherit; font-size: 22px;
+    letter-spacing: 8px;
+    cursor: pointer; border-radius: 4px;
+    transition: all 0.2s;
+  }
+  #startBtn:hover { box-shadow: 0 0 20px rgba(184,59,59,0.8); transform: scale(1.04); }
+  #opGuide {
+    margin-top: 30px; padding: 16px 30px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid #4a6b7d; border-radius: 6px;
+    font-size: 13px; color: #6b8e7f; line-height: 2;
+  }
+  #opGuide b { color: #f5d76e; margin: 0 4px; }
+
+  /* ========== 对话/任务面板 ========== */
+  #dialogPanel {
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 440px; padding: 20px 24px;
+    z-index: 50; display: none;
+  }
+  #dialogPanel h3 { color: #f5d76e; font-size: 20px; margin-bottom: 10px; letter-spacing: 2px; }
+  #dialogPanel p { color: #f5f0e6; font-size: 15px; line-height: 1.9; margin-bottom: 12px; }
+  .dialog-btns { display: flex; gap: 12px; justify-content: flex-end; margin-top: 10px; }
+  .btn {
+    padding: 8px 22px; background: rgba(184,59,59,0.3);
+    border: 1px solid #b83b3b; color: #f5f0e6;
+    font-family: inherit; font-size: 14px; cursor: pointer;
+    border-radius: 3px; transition: all 0.2s;
+  }
+  .btn:hover { background: rgba(184,59,59,0.6); }
+  .btn.gray { border-color: #4a6b7d; background: rgba(74,107,125,0.3); }
+
+  /* ========== 背包面板 ========== */
+  #bagPanel {
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 420px; padding: 18px 22px;
+    z-index: 50; display: none;
+  }
+  #bagPanel h3 { color: #f5d76e; font-size: 20px; margin-bottom: 12px; letter-spacing: 2px; }
+  .bag-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px; margin-bottom: 8px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid #4a6b7d; border-radius: 4px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .bag-item:hover { border-color: #b83b3b; background: rgba(184,59,59,0.15); }
+  .bag-icon { width: 36px; height: 36px; border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .bag-info { flex: 1; }
+  .bag-name { color: #f5f0e6; font-size: 15px; }
+  .bag-count { color: #f5d76e; font-size: 12px; margin-left: 8px; }
+  .bag-desc { color: #6b8e7f; font-size: 12px; margin-top: 2px; }
+  .bag-use { color: #b83b3b; font-size: 12px; }
+
+  /* ========== 菜单 ========== */
+  #menuPanel {
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 280px; padding: 20px;
+    z-index: 50; display: none; text-align: center;
+  }
+  #menuPanel h3 { color: #f5d76e; font-size: 22px; margin-bottom: 16px; letter-spacing: 4px; }
+  #menuPanel .btn { display: block; width: 100%; margin-bottom: 10px; }
+
+  /* ========== 死亡界面 ========== */
+  #deathScreen {
+    position: absolute; inset: 0;
+    background: rgba(10,0,0,0.85);
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 80;
+  }
+  #deathScreen h1 {
+    font-size: 64px; color: #b83b3b;
+    letter-spacing: 16px; text-shadow: 0 0 20px rgba(184,59,59,0.8);
+    margin-bottom: 30px;
+  }
+
+  /* ========== 升级提示 ========== */
+  #levelUp {
+    position: absolute; top: 38%; left: 50%; transform: translate(-50%,-50%);
+    font-size: 42px; color: #f5d76e;
+    letter-spacing: 8px; text-shadow: 0 0 16px rgba(245,215,110,0.9);
+    pointer-events: none; opacity: 0; z-index: 40;
+    transition: opacity 0.3s;
+  }
+
+  /* ========== 提示信息 ========== */
+  #toast {
+    position: absolute; top: 60%; left: 50%; transform: translateX(-50%);
+    padding: 8px 20px; background: rgba(0,0,0,0.7);
+    border: 1px solid #4a6b7d; border-radius: 4px;
+    color: #f5f0e6; font-size: 14px; z-index: 40;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+
+<!-- 顶部 HUD -->
+<div id="hud" class="panel" style="display:none;">
+  <div class="hud-row">
+    <span class="hud-label">气血</span>
+    <div class="bar"><div id="hpFill" class="bar-fill" style="width:100%"></div><div id="hpText" class="bar-text">100/100</div></div>
+  </div>
+  <div class="hud-row">
+    <span class="hud-label">灵力</span>
+    <div class="bar"><div id="mpFill" class="bar-fill" style="width:100%"></div><div id="mpText" class="bar-text">50/50</div></div>
+  </div>
+  <div class="hud-row">
+    <span class="hud-label">经验</span>
+    <div class="bar"><div id="expFill" class="bar-fill" style="width:0%"></div><div id="expText" class="bar-text">0/100</div></div>
+  </div>
+  <div class="hud-info">
+    <span>境界：<b id="lvlText">1</b> 阶</span>
+    <span>攻：<b id="atkText">10</b></span>
+    <span>防：<b id="defText">5</b></span>
+    <span>灵石：<b id="goldText">0</b></span>
+  </div>
+  <div id="questBrief">无任务</div>
+</div>
+
+<!-- 技能栏 -->
+<div id="skillBar" class="panel" style="display:none;">
+  <div class="skill ready" id="sk1">
+    <span class="sk-key">1</span><span class="sk-name">霜刃斩</span><span class="sk-cost">耗灵 8</span>
+    <div class="cd-mask" style="height:0%"></div>
+  </div>
+  <div class="skill ready" id="sk2">
+    <span class="sk-key">2</span><span class="sk-name">寒霜阵</span><span class="sk-cost">耗灵 20</span>
+    <div class="cd-mask" style="height:0%"></div>
+  </div>
+  <div class="skill ready" id="sk3">
+    <span class="sk-key">3</span><span class="sk-name">万剑归宗</span><span class="sk-cost">耗灵 50</span>
+    <div class="cd-mask" style="height:0%"></div>
+  </div>
+</div>
+
+<!-- 小地图 -->
+<div id="minimap" class="panel" style="display:none;">
+  <canvas id="miniCanvas" width="340" height="220"></canvas>
+</div>
+
+<!-- 操作提示 -->
+<div id="hint" class="panel" style="display:none;">
+  <b>WASD</b> 移动<br>
+  <b>鼠标左键</b> 挥剑攻击<br>
+  <b>1/2/3</b> 释放技能<br>
+  <b>B</b> 背包　<b>E</b> 交互<br>
+  <b>Esc</b> 菜单
+</div>
+
+<!-- 开始界面 -->
+<div id="startScreen">
+  <div class="title-wrap">
+    <div id="gameTitle">青雲志</div>
+    <div class="seal">青雲</div>
+    <div id="gameSubTitle">— 试玩 · 水墨仙侠 —</div>
+  </div>
+  <button id="startBtn">踏入青云</button>
+  <div id="opGuide">
+    <b>WASD</b> 移动 ｜ <b>鼠标左键</b> 挥剑攻击 ｜ <b>1/2/3</b> 释放技能<br>
+    <b>B</b> 背包 ｜ <b>E</b> 与 NPC 交互 ｜ <b>Esc</b> 菜单<br>
+    <span style="color:#b83b3b;">诛妖除魔，历练道心，问鼎青云。</span>
+  </div>
+</div>
+
+<!-- 对话面板 -->
+<div id="dialogPanel" class="panel">
+  <h3 id="dialogTitle">青云门使者</h3>
+  <p id="dialogText"></p>
+  <div class="dialog-btns">
+    <button class="btn gray" id="dialogClose">关闭</button>
+    <button class="btn" id="dialogAccept" style="display:none;">接取任务</button>
+    <button class="btn" id="dialogComplete" style="display:none;">交付任务</button>
+  </div>
+</div>
+
+<!-- 背包面板 -->
+<div id="bagPanel" class="panel">
+  <h3>乾坤袋</h3>
+  <div id="bagList"></div>
+  <div class="dialog-btns"><button class="btn gray" id="bagClose">关闭 (B)</button></div>
+</div>
+
+<!-- 菜单 -->
+<div id="menuPanel" class="panel">
+  <h3>暂停</h3>
+  <button class="btn" id="menuResume">继续修行</button>
+  <button class="btn gray" id="menuRestart">重新开始</button>
+</div>
+
+<!-- 死亡界面 -->
+<div id="deathScreen">
+  <h1>道心破碎</h1>
+  <button class="btn" id="reviveBtn" style="font-size:18px;padding:12px 40px;">重入轮回</button>
+</div>
+
+<!-- 升级提示 -->
+<div id="levelUp">境界提升</div>
+
+<!-- 提示信息 -->
+<div id="toast"></div>
+
+<script>
+/* =================================================================
+   青云志 · 单文件水墨国风 MMORPG
+   所有逻辑内联于此，Canvas 2D 渲染
+   ================================================================= */
+
+/* ---------- 配置常量（集中管理数值平衡） ---------- */
+const CONFIG = {
+  WORLD_W: 2400,       // 世界宽
+  WORLD_H: 1600,       // 世界高
+  PLAYER_SPEED: 3.2,   // 玩家移速
+  PLAYER_RADIUS: 14,
+  ATTACK_COOLDOWN: 380,// 普攻冷却 ms
+  ATTACK_RANGE: 90,
+  ATTACK_DAMAGE: 12,
+  MAX_ENEMIES: 20,     // 敌人数量上限
+  MAX_PARTICLES: 240,  // 粒子上限
+  ENEMY_SPAWN_INTERVAL: 2200, // 刷怪间隔 ms
+  CAMERA_LERP: 0.12,   // 相机平滑系数
+  NPC_X: 1300, NPC_Y: 800,
+  // 技能配置
+  SKILLS: {
+    1: { name:'霜刃斩', cost:8,  cd:1500, damage:30, type:'fan' },
+    2: { name:'寒霜阵', cost:20, cd:6000, damage:12, type:'frost', radius:140, duration:3500 },
+    3: { name:'万剑归宗', cost:50, cd:14000, damage:55, type:'rain' }
+  },
+  // 敌人配置
+  ENEMIES: {
+    moyao:  { name:'墨妖', hp:40,  atk:8,  speed:1.0, radius:14, exp:25, gold:3,  color:'#3a3a3a' },
+    yingsha:{ name:'影煞', hp:60,  atk:12, speed:2.0, radius:13, exp:45, gold:6,  color:'#4a6b7d' },
+    shuanggu:{name:'霜骨', hp:160, atk:22, speed:0.7, radius:20, exp:120,gold:20, color:'#6b8e7f' }
+  },
+  // 掉落物
+  DROPS: {
+    moyu:    { name:'墨玉',     desc:'漆黑如墨的灵玉，蕴含幽冥之气。', color:'#1a1a1a', icon:'玉' },
+    shuanghua:{name:'霜华露',   desc:'凝结的霜华之露，服用可恢复 60 点气血。', color:'#6b8e7f', icon:'露', heal:60 },
+    jianyi:  { name:'剑意残片', desc:'残破的剑意碎片，剑修梦寐以求之物。', color:'#b83b3b', icon:'剑' }
+  },
+  DROP_RATE: 0.35, // 击杀掉落概率
+  QUEST_TARGET: 5, // 任务目标数量
+  QUEST_REWARD_EXP: 150,
+  QUEST_REWARD_GOLD: 50
+};
+
+/* ---------- 全局状态 ---------- */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const miniCanvas = document.getElementById('miniCanvas');
+const miniCtx = miniCanvas.getContext('2d');
+
+let W = window.innerWidth, H = window.innerHeight;
+function resize() {
+  W = window.innerWidth; H = window.innerHeight;
+  canvas.width = W; canvas.height = H;
+}
+window.addEventListener('resize', resize);
+resize();
+
+const keys = new Set();       // 按键集合
+let mouseX = 0, mouseY = 0;   // 鼠标屏幕坐标
+let mouseDown = false;
+let lastAttackTime = 0;
+
+// 游戏全局对象
+const game = {
+  state: 'start',    // start | playing | paused | dead
+  player: null,
+  enemies: [],
+  projectiles: [],   // 剑气/技能投射物
+  drops: [],         // 掉落物
+  particles: [],     // 粒子
+  frostZones: [],    // 寒霜剑阵区域
+  camera: { x:0, y:0 },
+  lastSpawn: 0,
+  quest: { active:false, target:'moyao', count:0, done:false, claimed:false },
+  bag: { moyu:0, shuanghua:0, jianyi:0 },
+  time: 0
+};
+
+/* ---------- 工具函数 ---------- */
+function dist(a, b) { const dx=a.x-b.x, dy=a.y-b.y; return Math.sqrt(dx*dx+dy*dy); }
+function dist2(ax,ay,bx,by) { const dx=ax-bx, dy=ay-by; return dx*dx+dy*dy; }
+function rand(a, b) { return a + Math.random()*(b-a); }
+function randInt(a, b) { return Math.floor(rand(a, b+1)); }
+function clamp(v, a, b) { return v<a?a:(v>b?b:v); }
+// 世界坐标 -> 屏幕坐标
+function w2s(x, y) { return { x: x - game.camera.x, y: y - game.camera.y }; }
+// 屏幕坐标 -> 世界坐标
+function s2w(x, y) { return { x: x + game.camera.x, y: y + game.camera.y }; }
+
+function showToast(msg, dur=1600) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>{ t.style.opacity='0'; }, dur);
+}
+
+/* ---------- 玩家 ---------- */
+function createPlayer() {
+  return {
+    x: CONFIG.WORLD_W/2, y: CONFIG.WORLD_H/2,
+    radius: CONFIG.PLAYER_RADIUS,
+    hp: 100, maxHp: 100,
+    mp: 50,  maxMp: 50,
+    level: 1, exp: 0, expMax: 100,
+    atk: CONFIG.ATTACK_DAMAGE, def: 5,
+    gold: 0,
+    facing: 0, // 朝向角度
+    skillCd: { 1:0, 2:0, 3:0 },
+    hurtFlash: 0,
+    attackAnim: 0  // 攻击动画进度 0~1
+  };
+}
+
+function gainExp(amount) {
+  const p = game.player;
+  p.exp += amount;
+  while (p.exp >= p.expMax) {
+    p.exp -= p.expMax;
+    p.level++;
+    p.expMax = Math.floor(p.expMax * 1.4);
+    p.maxHp += 20; p.hp = p.maxHp;
+    p.maxMp += 10; p.mp = p.maxMp;
+    p.atk += 4; p.def += 2;
+    // 升级光效
+    for (let i=0;i<30;i++){
+      spawnParticle(p.x, p.y, '#f5d76e', rand(2,5), rand(0,Math.PI*2), rand(2,5), 800);
+    }
+    const lu = document.getElementById('levelUp');
+    lu.style.opacity = '1';
+    setTimeout(()=>{ lu.style.opacity='0'; }, 1200);
+  }
+}
+
+function damagePlayer(amount) {
+  const p = game.player;
+  const real = Math.max(1, amount - p.def);
+  p.hp -= real;
+  p.hurtFlash = 200;
+  // 受伤粒子
+  for (let i=0;i<6;i++){
+    spawnParticle(p.x, p.y, '#b83b3b', rand(2,4), rand(0,Math.PI*2), rand(1,3), 500);
+  }
+  if (p.hp <= 0) {
+    p.hp = 0;
+    game.state = 'dead';
+    document.getElementById('deathScreen').style.display = 'flex';
+  }
+}
+
+/* ---------- 敌人 ---------- */
+function spawnEnemy() {
+  if (game.enemies.length >= CONFIG.MAX_ENEMIES) return;
+  const p = game.player;
+  // 根据等级决定敌人类型概率
+  const lvl = p.level;
+  let type;
+  const r = Math.random();
+  if (lvl < 3) {
+    type = r < 0.8 ? 'moyao' : 'yingsha';
+  } else if (lvl < 6) {
+    type = r < 0.5 ? 'moyao' : (r < 0.85 ? 'yingsha' : 'shuanggu');
+  } else {
+    type = r < 0.35 ? 'moyao' : (r < 0.7 ? 'yingsha' : 'shuanggu');
+  }
+  const cfg = CONFIG.ENEMIES[type];
+  // 难度随等级提升
+  const hpMul = 1 + (lvl-1)*0.15;
+  const atkMul = 1 + (lvl-1)*0.1;
+  // 在玩家周围一定距离生成
+  const ang = rand(0, Math.PI*2);
+  const dst = rand(500, 800);
+  let x = clamp(p.x + Math.cos(ang)*dst, 60, CONFIG.WORLD_W-60);
+  let y = clamp(p.y + Math.sin(ang)*dst, 60, CONFIG.WORLD_H-60);
+  game.enemies.push({
+    type, x, y,
+    radius: cfg.radius,
+    hp: Math.floor(cfg.hp * hpMul), maxHp: Math.floor(cfg.hp * hpMul),
+    atk: Math.floor(cfg.atk * atkMul),
+    speed: cfg.speed,
+    color: cfg.color,
+    exp: cfg.exp, gold: cfg.gold,
+    name: cfg.name,
+    hurtFlash: 0,
+    frozen: 0, // 冰冻剩余 ms
+    attackCd: 0
+  });
+}
+
+function damageEnemy(e, amount, source='attack') {
+  e.hp -= amount;
+  e.hurtFlash = 200;
+  // 命中粒子
+  for (let i=0;i<5;i++){
+    spawnParticle(e.x, e.y, '#f5f0e6', rand(1.5,3), rand(0,Math.PI*2), rand(1,3), 400);
+  }
+  if (e.hp <= 0) {
+    killEnemy(e, source);
+  }
+}
+
+function killEnemy(e, source) {
+  // 死亡爆裂粒子
+  for (let i=0;i<14;i++){
+    spawnParticle(e.x, e.y, e.color, rand(2,5), rand(0,Math.PI*2), rand(1.5,4), 700);
+  }
+  // 经验与金币
+  gainExp(e.exp);
+  game.player.gold += e.gold;
+  // 任务计数
+  if (game.quest.active && !game.quest.done && e.type === game.quest.target) {
+    game.quest.count++;
+    if (game.quest.count >= CONFIG.QUEST_TARGET) {
+      game.quest.done = true;
+      showToast('任务完成，可回 NPC 交付');
+    }
+  }
+  // 掉落
+  if (Math.random() < CONFIG.DROP_RATE) {
+    const drops = ['moyu','shuanghua','jianyi'];
+    const pick = drops[randInt(0,2)];
+    game.drops.push({ type:pick, x:e.x, y:e.y, vy:0, life:15000, bob:rand(0,Math.PI*2) });
+  }
+  // 标记移除
+  e._dead = true;
+}
+
+/* ---------- 投射物 / 剑气 ---------- */
+function spawnSlash(x, y, angle, damage, range, color='#f5f0e6') {
+  game.projectiles.push({
+    type:'slash', x, y, angle, damage, range,
+    life: 220, maxLife: 220, color
+  });
+  // 剑气粒子
+  for (let i=0;i<8;i++){
+    const a = angle + rand(-0.4,0.4);
+    spawnParticle(x+Math.cos(a)*20, y+Math.sin(a)*20, color, rand(1.5,3), a, rand(2,5), 400);
+  }
+}
+
+function spawnSwordRain() {
+  // 万剑归宗：全屏剑雨
+  const p = game.player;
+  const count = 40;
+  for (let i=0;i<count;i++){
+    const ang = rand(0, Math.PI*2);
+    const dst = rand(50, 500);
+    const tx = p.x + Math.cos(ang)*dst;
+    const ty = p.y + Math.sin(ang)*dst;
+    game.projectiles.push({
+      type:'rain', x: tx, y: ty - 300, tx, ty,
+      damage: CONFIG.SKILLS[3].damage,
+      life: 1200, maxLife: 1200, color:'#f5f0e6', delay: i*25
+    });
+  }
+}
+
+/* ---------- 粒子 ---------- */
+function spawnParticle(x, y, color, size, angle, speed, life) {
+  if (game.particles.length >= CONFIG.MAX_PARTICLES) game.particles.shift();
+  game.particles.push({
+    x, y, color, size,
+    vx: Math.cos(angle)*speed,
+    vy: Math.sin(angle)*speed,
+    life, maxLife: life
+  });
+}
+
+/* ---------- 技能释放 ---------- */
+function castSkill(idx) {
+  const p = game.player;
+  const sk = CONFIG.SKILLS[idx];
+  if (!sk) return;
+  const now = performance.now();
+  if (p.skillCd[idx] > now) return;
+  if (p.mp < sk.cost) { showToast('灵力不足'); return; }
+  p.mp -= sk.cost;
+  p.skillCd[idx] = now + sk.cd;
+
+  if (sk.type === 'fan') {
+    // 霜刃斩：朝鼠标方向扇形剑气
+    const m = s2w(mouseX, mouseY);
+    const ang = Math.atan2(m.y - p.y, m.x - p.x);
+    spawnSlash(p.x, p.y, ang, sk.damage, 130, '#a8d8f0');
+    // 扇形命中
+    const range = 130, halfAng = Math.PI/4;
+    for (const e of game.enemies) {
+      if (e._dead) continue;
+      const d = dist(p, e);
+      if (d > range + e.radius) continue;
+      const ea = Math.atan2(e.y-p.y, e.x-p.x);
+      let da = Math.abs(ea - ang);
+      if (da > Math.PI) da = Math.PI*2 - da;
+      if (da < halfAng) damageEnemy(e, sk.damage, 'skill1');
+    }
+  } else if (sk.type === 'frost') {
+    // 寒霜剑阵：在鼠标位置放置冰冻区域
+    const m = s2w(mouseX, mouseY);
+    game.frostZones.push({
+      x: m.x, y: m.y, radius: sk.radius,
+      damage: sk.damage, life: sk.duration, maxLife: sk.duration,
+      tick: 0
+    });
+    showToast('寒霜剑阵已布下');
+  } else if (sk.type === 'rain') {
+    // 万剑归宗
+    spawnSwordRain();
+    showToast('万剑归宗！');
+  }
+}
+
+/* ---------- 普通攻击 ---------- */
+function doAttack() {
+  const p = game.player;
+  const now = performance.now();
+  if (now - lastAttackTime < CONFIG.ATTACK_COOLDOWN) return;
+  lastAttackTime = now;
+  const m = s2w(mouseX, mouseY);
+  const ang = Math.atan2(m.y - p.y, m.x - p.x);
+  p.facing = ang;
+  p.attackAnim = 1.0;
+  spawnSlash(p.x, p.y, ang, p.atk, CONFIG.ATTACK_RANGE, '#f5f0e6');
+  // 命中检测
+  for (const e of game.enemies) {
+    if (e._dead) continue;
+    const d = dist(p, e);
+    if (d > CONFIG.ATTACK_RANGE + e.radius) continue;
+    const ea = Math.atan2(e.y-p.y, e.x-p.x);
+    let da = Math.abs(ea - ang);
+    if (da > Math.PI) da = Math.PI*2 - da;
+    if (da < Math.PI/3) damageEnemy(e, p.atk, 'attack');
+  }
+}
+
+/* ---------- 更新逻辑 ---------- */
+function update(dt) {
+  if (game.state !== 'playing') return;
+  game.time += dt;
+  const p = game.player;
+
+  // 玩家移动
+  let mvx=0, mvy=0;
+  if (keys.has('w')||keys.has('arrowup')) mvy -= 1;
+  if (keys.has('s')||keys.has('arrowdown')) mvy += 1;
+  if (keys.has('a')||keys.has('arrowleft')) mvx -= 1;
+  if (keys.has('d')||keys.has('arrowright')) mvx += 1;
+  if (mvx||mvy) {
+    const len = Math.sqrt(mvx*mvx+mvy*mvy);
+    mvx/=len; mvy/=len;
+    p.x += mvx * CONFIG.PLAYER_SPEED;
+    p.y += mvy * CONFIG.PLAYER_SPEED;
+    p.facing = Math.atan2(mvy, mvx);
+  }
+  p.x = clamp(p.x, 30, CONFIG.WORLD_W-30);
+  p.y = clamp(p.y, 30, CONFIG.WORLD_H-30);
+
+  // 鼠标朝向（优先于移动）
+  const mw = s2w(mouseX, mouseY);
+  p.facing = Math.atan2(mw.y - p.y, mw.x - p.x);
+
+  // 持续攻击（按住鼠标）
+  if (mouseDown) doAttack();
+
+  // 攻击动画衰减
+  if (p.attackAnim > 0) p.attackAnim -= dt/200;
+  if (p.hurtFlash > 0) p.hurtFlash -= dt;
+
+  // 灵力缓慢恢复
+  if (p.mp < p.maxMp) p.mp = Math.min(p.maxMp, p.mp + dt*0.008);
+
+  // 相机平滑跟随
+  const targetCamX = p.x - W/2;
+  const targetCamY = p.y - H/2;
+  game.camera.x += (targetCamX - game.camera.x) * CONFIG.CAMERA_LERP;
+  game.camera.y += (targetCamY - game.camera.y) * CONFIG.CAMERA_LERP;
+  game.camera.x = clamp(game.camera.x, 0, CONFIG.WORLD_W - W);
+  game.camera.y = clamp(game.camera.y, 0, CONFIG.WORLD_H - H);
+
+  // 刷怪
+  if (game.time - game.lastSpawn > CONFIG.ENEMY_SPAWN_INTERVAL) {
+    game.lastSpawn = game.time;
+    spawnEnemy();
+    if (game.player.level >= 4 && Math.random() < 0.5) spawnEnemy();
+  }
+
+  // 敌人 AI
+  for (const e of game.enemies) {
+    if (e._dead) continue;
+    if (e.hurtFlash > 0) e.hurtFlash -= dt;
+    if (e.frozen > 0) { e.frozen -= dt; continue; } // 冰冻不移动
+    if (e.attackCd > 0) e.attackCd -= dt;
+    const d = dist(p, e);
+    if (d > 10) {
+      const ang = Math.atan2(p.y-e.y, p.x-e.x);
+      e.x += Math.cos(ang) * e.speed;
+      e.y += Math.sin(ang) * e.speed;
+    }
+    // 攻击玩家
+    if (d < e.radius + p.radius + 4 && e.attackCd <= 0) {
+      damagePlayer(e.atk);
+      e.attackCd = 900;
+    }
+  }
+  // 清理死亡敌人
+  game.enemies = game.enemies.filter(e => !e._dead);
+
+  // 投射物更新
+  for (const pr of game.projectiles) {
+    if (pr.type === 'rain') {
+      if (pr.delay > 0) { pr.delay -= dt; continue; }
+      const dy = pr.ty - pr.y;
+      if (dy > 0) {
+        pr.y += dt * 1.2;
+        if (pr.y >= pr.ty) {
+          pr.y = pr.ty;
+          pr.life = Math.min(pr.life, 100);
+          // 落地伤害
+          for (const e of game.enemies) {
+            if (e._dead) continue;
+            if (dist2(e.x,e.y,pr.tx,pr.ty) < (e.radius+30)*(e.radius+30)) {
+              damageEnemy(e, pr.damage, 'skill3');
+            }
+          }
+          // 落地粒子
+          for (let i=0;i<8;i++){
+            spawnParticle(pr.tx, pr.ty, '#f5f0e6', rand(1.5,3), rand(0,Math.PI*2), rand(1,3), 400);
+          }
+        }
+      } else {
+        pr.life -= dt;
+      }
+    } else {
+      pr.life -= dt;
+    }
+  }
+  game.projectiles = game.projectiles.filter(pr => pr.life > 0);
+
+  // 寒霜剑阵
+  for (const fz of game.frostZones) {
+    fz.life -= dt;
+    fz.tick += dt;
+    if (fz.tick > 700) {
+      fz.tick = 0;
+      for (const e of game.enemies) {
+        if (e._dead) continue;
+        if (dist2(e.x,e.y,fz.x,fz.y) < (fz.radius+e.radius)*(fz.radius+e.radius)) {
+          damageEnemy(e, fz.damage, 'skill2');
+          e.frozen = 1500; // 冰冻
+        }
+      }
+    }
+  }
+  game.frostZones = game.frostZones.filter(fz => fz.life > 0);
+
+  // 掉落物
+  for (const d of game.drops) {
+    d.life -= dt;
+    d.bob += dt*0.005;
+    if (dist(p, d) < p.radius + 18) {
+      // 拾取
+      game.bag[d.type] = (game.bag[d.type]||0) + 1;
+      showToast('获得 ' + CONFIG.DROPS[d.type].name);
+      d._picked = true;
+    }
+  }
+  game.drops = game.drops.filter(d => !d._picked && d.life > 0);
+
+  // 粒子
+  for (const pt of game.particles) {
+    pt.x += pt.vx; pt.y += pt.vy;
+    pt.vx *= 0.96; pt.vy *= 0.96;
+    pt.life -= dt;
+  }
+  game.particles = game.particles.filter(pt => pt.life > 0);
+
+  // 更新 HUD
+  updateHUD();
+}
+
+/* ---------- 渲染 ---------- */
+// 绘制水墨山水背景
+function drawBackground() {
+  // 底色渐变
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0, '#2c2c2c');
+  g.addColorStop(0.5, '#232323');
+  g.addColorStop(1, '#1a1a1a');
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,W,H);
+
+  // 远山（视差）
+  const camX = game.camera.x, camY = game.camera.y;
+  ctx.save();
+  ctx.globalAlpha = 0.18;
+  ctx.fillStyle = '#4a6b7d';
+  for (let i=0;i<5;i++){
+    const ox = -camX*0.3 + i*500 - 200;
+    const oy = H*0.4 - camY*0.1;
+    drawMountain(ox, oy, 400, 200, '#4a6b7d');
+  }
+  ctx.restore();
+
+  // 中景山
+  ctx.save();
+  ctx.globalAlpha = 0.28;
+  for (let i=0;i<6;i++){
+    const ox = -camX*0.5 + i*450 - 100;
+    const oy = H*0.55 - camY*0.2;
+    drawMountain(ox, oy, 350, 160, '#3a4f5d');
+  }
+  ctx.restore();
+
+  // 世界地面纹理（网格淡墨）
+  ctx.save();
+  ctx.strokeStyle = 'rgba(245,240,230,0.04)';
+  ctx.lineWidth = 1;
+  const gridSize = 80;
+  const startX = -camX % gridSize;
+  const startY = -camY % gridSize;
+  for (let x=startX; x<W; x+=gridSize) {
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
+  }
+  for (let y=startY; y<H; y+=gridSize) {
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+  }
+  ctx.restore();
+
+  // 世界边界（水墨山水围墙）
+  drawWorldBoundary();
+}
+
+// 绘制简笔山形
+function drawMountain(x, y, w, h, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x, y+h);
+  ctx.lineTo(x+w*0.2, y+h*0.3);
+  ctx.lineTo(x+w*0.35, y+h*0.6);
+  ctx.lineTo(x+w*0.5, y);
+  ctx.lineTo(x+w*0.65, y+h*0.5);
+  ctx.lineTo(x+w*0.8, y+h*0.2);
+  ctx.lineTo(x+w, y+h);
+  ctx.closePath();
+  ctx.fill();
+}
+
+// 世界边界山水
+function drawWorldBoundary() {
+  const camX = game.camera.x, camY = game.camera.y;
+  ctx.save();
+  ctx.globalAlpha = 0.5;
+  // 上边界
+  for (let i=0;i<8;i++){
+    const sx = i*350 - camX;
+    drawMountain(sx, -camY-100, 350, 180, '#1a1a1a');
+  }
+  // 下边界
+  for (let i=0;i<8;i++){
+    const sx = i*350 - camX;
+    const sy = CONFIG.WORLD_H - camY;
+    drawMountain(sx, sy-80, 350, 180, '#1a1a1a');
+  }
+  // 左边界
+  ctx.globalAlpha = 0.4;
+  for (let i=0;i<6;i++){
+    const sy = i*300 - camY;
+    drawMountain(-camX-150, sy, 250, 150, '#1a1a1a');
+  }
+  // 右边界
+  for (let i=0;i<6;i++){
+    const sy = i*300 - camY;
+    drawMountain(CONFIG.WORLD_W-camX-100, sy, 250, 150, '#1a1a1a');
+  }
+  ctx.restore();
+}
+
+// 绘制玩家（水墨风剑修小人）
+function drawPlayer() {
+  const p = game.player;
+  const s = w2s(p.x, p.y);
+  // 离屏不渲染
+  if (s.x < -50 || s.x > W+50 || s.y < -50 || s.y > H+50) return;
+
+  ctx.save();
+  ctx.translate(s.x, s.y);
+
+  // 影子
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.beginPath();
+  ctx.ellipse(0, p.radius+4, p.radius, p.radius*0.4, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // 受伤闪烁
+  if (p.hurtFlash > 0 && Math.floor(p.hurtFlash/60)%2===0) {
+    ctx.globalAlpha = 0.7;
+  }
+
+  // 身体（青瓷绿长袍）
+  ctx.fillStyle = '#6b8e7f';
+  ctx.beginPath();
+  ctx.moveTo(-p.radius*0.8, p.radius);
+  ctx.lineTo(-p.radius*0.6, -p.radius*0.4);
+  ctx.lineTo(p.radius*0.6, -p.radius*0.4);
+  ctx.lineTo(p.radius*0.8, p.radius);
+  ctx.closePath();
+  ctx.fill();
+
+  // 腰带（朱砂）
+  ctx.fillStyle = '#b83b3b';
+  ctx.fillRect(-p.radius*0.7, p.radius*0.2, p.radius*1.4, 3);
+
+  // 头部
+  ctx.fillStyle = '#f5f0e6';
+  ctx.beginPath();
+  ctx.arc(0, -p.radius*0.7, p.radius*0.5, 0, Math.PI*2);
+  ctx.fill();
+
+  // 发髻（墨黑）
+  ctx.fillStyle = '#1a1a1a';
+  ctx.beginPath();
+  ctx.arc(0, -p.radius*1.0, p.radius*0.35, 0, Math.PI*2);
+  ctx.fill();
+
+  // 朝向指示剑
+  ctx.rotate(p.facing);
+  const swing = p.attackAnim > 0 ? Math.sin(p.attackAnim*Math.PI)*0.8 : 0;
+  ctx.rotate(swing);
+  // 剑身（月白）
+  ctx.fillStyle = '#f5f0e6';
+  ctx.fillRect(p.radius*0.5, -2, p.radius*1.2, 4);
+  // 剑柄（朱砂）
+  ctx.fillStyle = '#b83b3b';
+  ctx.fillRect(p.radius*0.3, -3, p.radius*0.3, 6);
+  // 剑气光效
+  if (p.attackAnim > 0) {
+    ctx.globalAlpha = p.attackAnim * 0.6;
+    ctx.fillStyle = '#f5f0e6';
+    ctx.beginPath();
+    ctx.arc(p.radius*1.0, 0, p.radius*1.5, -0.5, 0.5);
+    ctx.lineTo(p.radius*1.0, 0);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  ctx.restore();
+
+  // 玩家头顶等级
+  ctx.fillStyle = '#f5d76e';
+  ctx.font = '12px "KaiTi",serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(p.level+'阶', s.x, s.y - p.radius*1.6);
+}
+
+// 绘制敌人
+function drawEnemy(e) {
+  const s = w2s(e.x, e.y);
+  if (s.x < -50 || s.x > W+50 || s.y < -50 || s.y > H+50) return;
+  ctx.save();
+  ctx.translate(s.x, s.y);
+
+  // 影子
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(0, e.radius+3, e.radius, e.radius*0.4, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  if (e.hurtFlash > 0 && Math.floor(e.hurtFlash/50)%2===0) {
+    ctx.fillStyle = '#f5f0e6';
+  } else {
+    ctx.fillStyle = e.color;
+  }
+
+  // 不同敌人形状
+  if (e.type === 'moyao') {
+    // 墨妖：圆形+触角
+    ctx.beginPath();
+    ctx.arc(0, 0, e.radius, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = '#1a1a1a';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-e.radius*0.5, -e.radius);
+    ctx.lineTo(-e.radius*0.3, -e.radius*1.4);
+    ctx.moveTo(e.radius*0.5, -e.radius);
+    ctx.lineTo(e.radius*0.3, -e.radius*1.4);
+    ctx.stroke();
+    // 眼睛
+    ctx.fillStyle = '#b83b3b';
+    ctx.beginPath();
+    ctx.arc(-e.radius*0.3, -e.radius*0.1, 2, 0, Math.PI*2);
+    ctx.arc(e.radius*0.3, -e.radius*0.1, 2, 0, Math.PI*2);
+    ctx.fill();
+  } else if (e.type === 'yingsha') {
+    // 影煞：菱形
+    ctx.beginPath();
+    ctx.moveTo(0, -e.radius);
+    ctx.lineTo(e.radius, 0);
+    ctx.lineTo(0, e.radius);
+    ctx.lineTo(-e.radius, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#f5f0e6';
+    ctx.beginPath();
+    ctx.arc(0, 0, 3, 0, Math.PI*2);
+    ctx.fill();
+  } else {
+    // 霜骨：大圆+冰刺
+    ctx.beginPath();
+    ctx.arc(0, 0, e.radius, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = '#f5f0e6';
+    ctx.lineWidth = 2;
+    for (let i=0;i<6;i++){
+      const a = i*Math.PI/3;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a)*e.radius, Math.sin(a)*e.radius);
+      ctx.lineTo(Math.cos(a)*e.radius*1.4, Math.sin(a)*e.radius*1.4);
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#b83b3b';
+    ctx.beginPath();
+    ctx.arc(0, 0, 4, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // 冰冻效果
+  if (e.frozen > 0) {
+    ctx.strokeStyle = 'rgba(168,216,240,0.7)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, e.radius+3, 0, Math.PI*2);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+
+  // 血条
+  const bw = e.radius*2, bh = 4;
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillRect(s.x-bw/2, s.y-e.radius-10, bw, bh);
+  ctx.fillStyle = '#b83b3b';
+  ctx.fillRect(s.x-bw/2, s.y-e.radius-10, bw*(e.hp/e.maxHp), bh);
+  // 名字
+  ctx.fillStyle = '#f5f0e6';
+  ctx.font = '11px "KaiTi",serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(e.name, s.x, s.y-e.radius-14);
+}
+
+// 绘制 NPC
+function drawNPC() {
+  const nx = CONFIG.NPC_X, ny = CONFIG.NPC_Y;
+  const s = w2s(nx, ny);
+  if (s.x < -50 || s.x > W+50 || s.y < -50 || s.y > H+50) return;
+  ctx.save();
+  ctx.translate(s.x, s.y);
+
+  // 影子
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.beginPath();
+  ctx.ellipse(0, 18, 14, 5, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // 长袍（黛墨青）
+  ctx.fillStyle = '#4a6b7d';
+  ctx.beginPath();
+  ctx.moveTo(-12, 16);
+  ctx.lineTo(-9, -6);
+  ctx.lineTo(9, -6);
+  ctx.lineTo(12, 16);
+  ctx.closePath();
+  ctx.fill();
+  // 腰带
+  ctx.fillStyle = '#f5d76e';
+  ctx.fillRect(-10, 3, 20, 2);
+  // 头
+  ctx.fillStyle = '#f5f0e6';
+  ctx.beginPath();
+  ctx.arc(0, -12, 7, 0, Math.PI*2);
+  ctx.fill();
+  // 帽子
+  ctx.fillStyle = '#1a1a1a';
+  ctx.beginPath();
+  ctx.moveTo(-8, -14);
+  ctx.lineTo(0, -22);
+  ctx.lineTo(8, -14);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+
+  // 感叹号
+  const bob = Math.sin(game.time*0.005)*3;
+  ctx.fillStyle = game.quest.done ? '#f5d76e' : '#b83b3b';
+  ctx.font = 'bold 22px "KaiTi",serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(game.quest.done ? '？' : '！', s.x, s.y - 30 + bob);
+  ctx.fillStyle = '#f5f0e6';
+  ctx.font = '12px "KaiTi",serif';
+  ctx.fillText('青云门使者', s.x, s.y + 30);
+
+  // 交互提示
+  if (game.player && dist(game.player, {x:nx,y:ny}) < 80) {
+    ctx.fillStyle = '#f5d76e';
+    ctx.font = '12px "KaiTi",serif';
+    ctx.fillText('按 E 交互', s.x, s.y - 48);
+  }
+}
+
+// 绘制投射物
+function drawProjectiles() {
+  for (const pr of game.projectiles) {
+    if (pr.type === 'slash') {
+      const s = w2s(pr.x, pr.y);
+      const alpha = pr.life / pr.maxLife;
+      ctx.save();
+      ctx.translate(s.x, s.y);
+      ctx.rotate(pr.angle);
+      ctx.globalAlpha = alpha * 0.9;
+      // 剑气水墨晕染
+      const grad = ctx.createLinearGradient(0,0,pr.range,0);
+      grad.addColorStop(0, 'rgba(245,240,230,0.9)');
+      grad.addColorStop(0.6, 'rgba(245,240,230,0.4)');
+      grad.addColorStop(1, 'rgba(245,240,230,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(0, -8);
+      ctx.quadraticCurveTo(pr.range*0.5, -16, pr.range, 0);
+      ctx.quadraticCurveTo(pr.range*0.5, 16, 0, 8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    } else if (pr.type === 'rain') {
+      if (pr.delay > 0) continue;
+      const s = w2s(pr.x, pr.y);
+      ctx.save();
+      ctx.strokeStyle = '#f5f0e6';
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(s.x, s.y);
+      ctx.lineTo(s.x+2, s.y+20);
+      ctx.stroke();
+      // 剑形
+      ctx.fillStyle = '#f5f0e6';
+      ctx.beginPath();
+      ctx.moveTo(s.x, s.y);
+      ctx.lineTo(s.x+3, s.y+15);
+      ctx.lineTo(s.x, s.y+20);
+      ctx.lineTo(s.x-3, s.y+15);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+}
+
+// 绘制寒霜剑阵
+function drawFrostZones() {
+  for (const fz of game.frostZones) {
+    const s = w2s(fz.x, fz.y);
+    const alpha = Math.min(1, fz.life/600) * 0.5;
+    ctx.save();
+    // 外圈
+    const grad = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, fz.radius);
+    grad.addColorStop(0, `rgba(107,142,127,${alpha})`);
+    grad.addColorStop(0.7, `rgba(74,107,125,${alpha*0.6})`);
+    grad.addColorStop(1, 'rgba(74,107,125,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, fz.radius, 0, Math.PI*2);
+    ctx.fill();
+    // 冰晶纹路
+    ctx.strokeStyle = `rgba(168,216,240,${alpha*1.5})`;
+    ctx.lineWidth = 1.5;
+    for (let i=0;i<6;i++){
+      const a = i*Math.PI/3 + game.time*0.001;
+      ctx.beginPath();
+      ctx.moveTo(s.x, s.y);
+      ctx.lineTo(s.x+Math.cos(a)*fz.radius, s.y+Math.sin(a)*fz.radius);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+
+// 绘制掉落物
+function drawDrops() {
+  for (const d of game.drops) {
+    const s = w2s(d.x, d.y);
+    if (s.x < -30 || s.x > W+30 || s.y < -30 || s.y > H+30) continue;
+    const cfg = CONFIG.DROPS[d.type];
+    const bob = Math.sin(d.bob)*3;
+    ctx.save();
+    ctx.translate(s.x, s.y+bob);
+    // 光晕
+    ctx.fillStyle = cfg.color;
+    ctx.globalAlpha = 0.3;
+    ctx.beginPath();
+    ctx.arc(0, 0, 14, 0, Math.PI*2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    // 物品方块
+    ctx.fillStyle = cfg.color;
+    ctx.fillRect(-8, -8, 16, 16);
+    ctx.strokeStyle = '#f5f0e6';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(-8, -8, 16, 16);
+    // 图标字
+    ctx.fillStyle = '#f5f0e6';
+    ctx.font = '11px "KaiTi",serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(cfg.icon, 0, 4);
+    ctx.restore();
+  }
+}
+
+// 绘制粒子
+function drawParticles() {
+  for (const pt of game.particles) {
+    const s = w2s(pt.x, pt.y);
+    const alpha = pt.life / pt.maxLife;
+    ctx.fillStyle = pt.color;
+    ctx.globalAlpha = alpha;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, pt.size, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// 主渲染
+function render() {
+  drawBackground();
+  drawFrostZones();
+  drawDrops();
+  drawNPC();
+  // 敌人
+  for (const e of game.enemies) drawEnemy(e);
+  drawPlayer();
+  drawProjectiles();
+  drawParticles();
+  drawMinimap();
+}
+
+// 小地图
+function drawMinimap() {
+  const mw = miniCanvas.width, mh = miniCanvas.height;
+  miniCtx.fillStyle = '#1a1a1a';
+  miniCtx.fillRect(0,0,mw,mh);
+  const sx = mw / CONFIG.WORLD_W;
+  const sy = mh / CONFIG.WORLD_H;
+  // 边界
+  miniCtx.strokeStyle = '#4a6b7d';
+  miniCtx.lineWidth = 1;
+  miniCtx.strokeRect(0,0,mw,mh);
+  // 视口框
+  miniCtx.strokeStyle = 'rgba(245,240,230,0.3)';
+  miniCtx.strokeRect(game.camera.x*sx, game.camera.y*sy, W*sx, H*sy);
+  // NPC
+  miniCtx.fillStyle = '#f5d76e';
+  miniCtx.fillRect(CONFIG.NPC_X*sx-3, CONFIG.NPC_Y*sy-3, 6, 6);
+  // 敌人
+  miniCtx.fillStyle = '#b83b3b';
+  for (const e of game.enemies) {
+    miniCtx.fillRect(e.x*sx-1, e.y*sy-1, 3, 3);
+  }
+  // 掉落物
+  miniCtx.fillStyle = '#6b8e7f';
+  for (const d of game.drops) {
+    miniCtx.fillRect(d.x*sx-1, d.y*sy-1, 2, 2);
+  }
+  // 玩家
+  if (game.player) {
+    miniCtx.fillStyle = '#f5f0e6';
+    miniCtx.beginPath();
+    miniCtx.arc(game.player.x*sx, game.player.y*sy, 3, 0, Math.PI*2);
+    miniCtx.fill();
+  }
+}
+
+/* ---------- HUD 更新 ---------- */
+function updateHUD() {
+  const p = game.player;
+  if (!p) return;
+  document.getElementById('hpFill').style.width = (p.hp/p.maxHp*100)+'%';
+  document.getElementById('hpText').textContent = Math.ceil(p.hp)+'/'+p.maxHp;
+  document.getElementById('mpFill').style.width = (p.mp/p.maxMp*100)+'%';
+  document.getElementById('mpText').textContent = Math.ceil(p.mp)+'/'+p.maxMp;
+  document.getElementById('expFill').style.width = (p.exp/p.expMax*100)+'%';
+  document.getElementById('expText').textContent = p.exp+'/'+p.expMax;
+  document.getElementById('lvlText').textContent = p.level;
+  document.getElementById('atkText').textContent = p.atk;
+  document.getElementById('defText').textContent = p.def;
+  document.getElementById('goldText').textContent = p.gold;
+
+  // 任务简报
+  const qb = document.getElementById('questBrief');
+  if (game.quest.active && !game.quest.done) {
+    const cfg = CONFIG.ENEMIES[game.quest.target];
+    qb.innerHTML = '任务：诛杀<b>'+cfg.name+'</b> '+game.quest.count+'/'+CONFIG.QUEST_TARGET;
+  } else if (game.quest.done && !game.quest.claimed) {
+    qb.innerHTML = '任务<b>已完成</b>，回 NPC 交付';
+  } else {
+    qb.textContent = '无任务（找青云门使者接取）';
+  }
+
+  // 技能冷却
+  const now = performance.now();
+  for (let i=1;i<=3;i++){
+    const sk = CONFIG.SKILLS[i];
+    const remain = p.skillCd[i] - now;
+    const mask = document.querySelector('#sk'+i+' .cd-mask');
+    const skEl = document.getElementById('sk'+i);
+    if (remain > 0) {
+      mask.style.height = (remain/sk.cd*100)+'%';
+      skEl.classList.remove('ready');
+    } else {
+      mask.style.height = '0%';
+      skEl.classList.add('ready');
+    }
+  }
+}
+
+/* ---------- 背包 ---------- */
+function renderBag() {
+  const list = document.getElementById('bagList');
+  list.innerHTML = '';
+  let hasItem = false;
+  for (const key in CONFIG.DROPS) {
+    if (game.bag[key] > 0) {
+      hasItem = true;
+      const cfg = CONFIG.DROPS[key];
+      const div = document.createElement('div');
+      div.className = 'bag-item';
+      const canUse = cfg.heal > 0;
+      div.innerHTML = `
+        <div class="bag-icon" style="background:${cfg.color};color:#f5f0e6;">${cfg.icon}</div>
+        <div class="bag-info">
+          <div class="bag-name">${cfg.name}<span class="bag-count">×${game.bag[key]}</span></div>
+          <div class="bag-desc">${cfg.desc}</div>
+        </div>
+        ${canUse ? '<div class="bag-use">点击使用</div>' : ''}
+      `;
+      if (canUse) {
+        div.onclick = () => {
+          if (game.bag[key] > 0) {
+            game.bag[key]--;
+            const p = game.player;
+            p.hp = Math.min(p.maxHp, p.hp + cfg.heal);
+            showToast('服用 '+cfg.name+'，恢复 '+cfg.heal+' 气血');
+            renderBag();
+          }
+        };
+      }
+      list.appendChild(div);
+    }
+  }
+  if (!hasItem) {
+    list.innerHTML = '<div style="color:#6b8e7f;text-align:center;padding:20px;">乾坤袋空空如也</div>';
+  }
+}
+
+/* ---------- NPC 交互 ---------- */
+function interactNPC() {
+  const p = game.player;
+  const d = dist(p, { x:CONFIG.NPC_X, y:CONFIG.NPC_Y });
+  if (d > 80) { showToast('距离太远'); return; }
+  const panel = document.getElementById('dialogPanel');
+  const title = document.getElementById('dialogTitle');
+  const text = document.getElementById('dialogText');
+  const accBtn = document.getElementById('dialogAccept');
+  const compBtn = document.getElementById('dialogComplete');
+
+  title.textContent = '青云门使者';
+  if (!game.quest.active && !game.quest.claimed) {
+    // 首次接取
+    text.innerHTML = '道友既入青云，当诛妖卫道。<br>近日<b style="color:#b83b3b;">墨妖</b>横行，烦请道友诛杀 <b>'+CONFIG.QUEST_TARGET+'</b> 只，以安此方天地。';
+    accBtn.style.display = 'inline-block';
+    compBtn.style.display = 'none';
+  } else if (game.quest.active && !game.quest.done) {
+    text.innerHTML = '任务未完成。<br>当前进度：<b>'+game.quest.count+'/'+CONFIG.QUEST_TARGET+'</b>';
+    accBtn.style.display = 'none';
+    compBtn.style.display = 'none';
+  } else if (game.quest.done && !game.quest.claimed) {
+    text.innerHTML = '道友果然根骨不凡！<br>这是答应的酬谢：<b style="color:#f5d76e;">'+CONFIG.QUEST_REWARD_EXP+' 经验，'+CONFIG.QUEST_REWARD_GOLD+' 灵石</b>。';
+    accBtn.style.display = 'none';
+    compBtn.style.display = 'inline-block';
+  } else {
+    text.innerHTML = '道友若欲精进，可继续诛杀妖邪，历练道心。';
+    accBtn.style.display = 'none';
+    compBtn.style.display = 'none';
+  }
+  panel.style.display = 'block';
+  game.state = 'paused';
+}
+
+document.getElementById('dialogAccept').onclick = () => {
+  game.quest.active = true;
+  game.quest.count = 0;
+  game.quest.done = false;
+  document.getElementById('dialogPanel').style.display = 'none';
+  game.state = 'playing';
+  showToast('已接取任务：诛杀墨妖 ×'+CONFIG.QUEST_TARGET);
+};
+document.getElementById('dialogComplete').onclick = () => {
+  game.quest.claimed = true;
+  game.quest.active = false;
+  gainExp(CONFIG.QUEST_REWARD_EXP);
+  game.player.gold += CONFIG.QUEST_REWARD_GOLD;
+  document.getElementById('dialogPanel').style.display = 'none';
+  game.state = 'playing';
+  showToast('获得 '+CONFIG.QUEST_REWARD_EXP+' 经验，'+CONFIG.QUEST_REWARD_GOLD+' 灵石');
+};
+document.getElementById('dialogClose').onclick = () => {
+  document.getElementById('dialogPanel').style.display = 'none';
+  game.state = 'playing';
+};
+
+/* ---------- 面板开关 ---------- */
+function toggleBag() {
+  const bag = document.getElementById('bagPanel');
+  if (bag.style.display === 'block') {
+    bag.style.display = 'none';
+    game.state = 'playing';
+  } else {
+    renderBag();
+    bag.style.display = 'block';
+    game.state = 'paused';
+    // 关闭其他面板
+    document.getElementById('dialogPanel').style.display = 'none';
+    document.getElementById('menuPanel').style.display = 'none';
+  }
+}
+document.getElementById('bagClose').onclick = toggleBag;
+
+function toggleMenu() {
+  const m = document.getElementById('menuPanel');
+  if (m.style.display === 'block') {
+    m.style.display = 'none';
+    game.state = 'playing';
+  } else {
+    m.style.display = 'block';
+    game.state = 'paused';
+    document.getElementById('dialogPanel').style.display = 'none';
+    document.getElementById('bagPanel').style.display = 'none';
+  }
+}
+document.getElementById('menuResume').onclick = toggleMenu;
+document.getElementById('menuRestart').onclick = () => {
+  document.getElementById('menuPanel').style.display = 'none';
+  startGame();
+};
+
+/* ---------- 事件绑定 ---------- */
+window.addEventListener('keydown', (e) => {
+  const k = e.key.toLowerCase();
+  keys.add(k);
+  if (game.state !== 'playing') {
+    // 暂停状态下仍允许 Esc 关闭菜单
+    if (k === 'escape') {
+      const menu = document.getElementById('menuPanel');
+      const bag = document.getElementById('bagPanel');
+      const dlg = document.getElementById('dialogPanel');
+      if (menu.style.display==='block') toggleMenu();
+      else if (bag.style.display==='block') toggleBag();
+      else if (dlg.style.display==='block') { dlg.style.display='none'; game.state='playing'; }
+    }
+    return;
+  }
+  if (k === 'b') { toggleBag(); e.preventDefault(); }
+  else if (k === 'e') { interactNPC(); }
+  else if (k === 'escape') { toggleMenu(); }
+  else if (k === '1') { castSkill(1); }
+  else if (k === '2') { castSkill(2); }
+  else if (k === '3') { castSkill(3); }
+});
+window.addEventListener('keyup', (e) => { keys.delete(e.key.toLowerCase()); });
+
+canvas.addEventListener('mousemove', (e) => {
+  mouseX = e.clientX; mouseY = e.clientY;
+});
+canvas.addEventListener('mousedown', (e) => {
+  if (e.button === 0) { mouseDown = true; doAttack(); }
+});
+window.addEventListener('mouseup', (e) => {
+  if (e.button === 0) mouseDown = false;
+});
+// 阻止右键菜单
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+/* ---------- 开始/重启游戏 ---------- */
+function startGame() {
+  game.player = createPlayer();
+  game.enemies = [];
+  game.projectiles = [];
+  game.drops = [];
+  game.particles = [];
+  game.frostZones = [];
+  game.camera = { x: game.player.x - W/2, y: game.player.y - H/2 };
+  game.lastSpawn = 0;
+  game.time = 0;
+  game.quest = { active:false, target:'moyao', count:0, done:false, claimed:false };
+  game.bag = { moyu:0, shuanghua:0, jianyi:0 };
+  game.state = 'playing';
+  // 显示 UI
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('hud').style.display = 'block';
+  document.getElementById('skillBar').style.display = 'flex';
+  document.getElementById('minimap').style.display = 'block';
+  document.getElementById('hint').style.display = 'block';
+  document.getElementById('deathScreen').style.display = 'none';
+  document.getElementById('dialogPanel').style.display = 'none';
+  document.getElementById('bagPanel').style.display = 'none';
+  document.getElementById('menuPanel').style.display = 'none';
+  // 初始刷几只怪
+  for (let i=0;i<4;i++) spawnEnemy();
+}
+
+document.getElementById('startBtn').onclick = startGame;
+document.getElementById('reviveBtn').onclick = () => {
+  // 重生：保留等级和背包，重置位置和 HP
+  const p = game.player;
+  p.x = CONFIG.WORLD_W/2; p.y = CONFIG.WORLD_H/2;
+  p.hp = p.maxHp; p.mp = p.maxMp;
+  p.hurtFlash = 0;
+  game.enemies = [];
+  game.projectiles = [];
+  game.frostZones = [];
+  game.state = 'playing';
+  document.getElementById('deathScreen').style.display = 'none';
+  showToast('道心重聚，再入红尘');
+};
+
+/* ---------- 主循环 ---------- */
+let lastTime = performance.now();
+function loop(now) {
+  const dt = Math.min(50, now - lastTime);
+  lastTime = now;
+  update(dt);
+  if (game.state === 'playing' || game.state === 'paused') {
+    render();
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+</script>
+</body>
+</html>
