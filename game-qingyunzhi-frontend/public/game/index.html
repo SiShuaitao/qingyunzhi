@@ -56,12 +56,39 @@
   }
   .hud-info { display: flex; gap: 14px; margin-top: 6px; font-size: 13px; color: #f5f0e6; }
   .hud-info span b { color: #f5d76e; }
+  /* 关卡简报（HUD 内） */
+  #levelBrief {
+    margin-top: 6px; padding-top: 6px;
+    border-top: 1px dashed #4a6b7d;
+    font-size: 12px; color: #b83b3b;
+    display: none;
+  }
+  #levelBrief b { color: #f5d76e; }
   #questBrief {
     margin-top: 6px; padding-top: 6px;
     border-top: 1px dashed #4a6b7d;
     font-size: 12px; color: #6b8e7f;
   }
   #questBrief b { color: #f5d76e; }
+
+  /* ========== BOSS 血条（顶部中央） ========== */
+  #bossBar {
+    position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+    width: 420px; display: none; z-index: 30; text-align: center;
+  }
+  #bossName {
+    font-size: 14px; color: #f5f0e6; letter-spacing: 4px;
+    margin-bottom: 4px; text-shadow: 0 0 6px #000;
+  }
+  .boss-track {
+    height: 10px; background: rgba(0,0,0,0.65);
+    border: 1px solid #b83b3b; border-radius: 3px; overflow: hidden;
+  }
+  #bossFill {
+    height: 100%; width: 100%;
+    background: linear-gradient(90deg, #8a2a2a, #b83b3b);
+    transition: width 0.2s;
+  }
 
   /* ========== 技能栏 ========== */
   #skillBar {
@@ -114,8 +141,9 @@
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     z-index: 100;
+    overflow-y: auto;
   }
-  .title-wrap { text-align: center; position: relative; }
+  .title-wrap { text-align: center; position: relative; margin-top: 20px; }
   #gameTitle {
     font-size: 72px; color: #f5f0e6;
     letter-spacing: 12px;
@@ -139,8 +167,40 @@
     transform: rotate(-4deg);
     font-weight: bold;
   }
+  /* 关卡选择卡片 */
+  #levelSelect { display: flex; gap: 14px; margin-top: 34px; flex-wrap: wrap; justify-content: center; }
+  .lv-card {
+    position: relative; width: 150px; padding: 14px 10px 12px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid #4a6b7d; border-radius: 6px;
+    cursor: pointer; text-align: center;
+    transition: all 0.2s;
+  }
+  .lv-card:hover { border-color: #b83b3b; }
+  .lv-card.selected {
+    border-color: #f5d76e;
+    box-shadow: 0 0 12px rgba(245,215,110,0.35);
+    transform: translateY(-3px);
+  }
+  .lv-card.locked { opacity: 0.45; cursor: not-allowed; }
+  .lv-card.locked:hover { border-color: #4a6b7d; }
+  .lv-name { font-size: 18px; letter-spacing: 2px; color: #f5f0e6; }
+  .lv-req { font-size: 11px; color: #6b8e7f; margin-top: 6px; }
+  .lv-obj { font-size: 11px; color: #9a9484; margin-top: 4px; line-height: 1.6; min-height: 34px; }
+  .lv-lock { margin-top: 6px; font-size: 12px; color: #b83b3b; }
+  .lv-seal {
+    position: absolute; top: -10px; right: -10px;
+    width: 30px; height: 34px;
+    background: #b83b3b; border: 1px solid #8a2a2a; border-radius: 3px;
+    color: #f5f0e6; font-size: 11px; line-height: 1.1;
+    display: flex; align-items: center; justify-content: center;
+    transform: rotate(-8deg);
+    writing-mode: vertical-rl;
+    font-weight: bold;
+    box-shadow: 0 0 8px rgba(184,59,59,0.6);
+  }
   #startBtn {
-    margin-top: 50px;
+    margin-top: 34px;
     padding: 14px 60px;
     background: linear-gradient(180deg, #b83b3b, #8a2a2a);
     border: 1px solid #f5d76e;
@@ -152,12 +212,44 @@
   }
   #startBtn:hover { box-shadow: 0 0 20px rgba(184,59,59,0.8); transform: scale(1.04); }
   #opGuide {
-    margin-top: 30px; padding: 16px 30px;
+    margin-top: 26px; margin-bottom: 20px; padding: 16px 30px;
     background: rgba(0,0,0,0.5);
     border: 1px solid #4a6b7d; border-radius: 6px;
     font-size: 13px; color: #6b8e7f; line-height: 2;
   }
   #opGuide b { color: #f5d76e; margin: 0 4px; }
+
+  /* ========== 关卡入场大字（水墨展开） ========== */
+  #levelIntro {
+    position: absolute; top: 30%; left: 50%;
+    transform: translate(-50%,-50%);
+    text-align: center; pointer-events: none;
+    opacity: 0; z-index: 60;
+  }
+  #levelIntro.show { animation: inkIn 3.2s ease forwards; }
+  #liName {
+    font-size: 56px; letter-spacing: 18px; color: #f5f0e6;
+    text-shadow: 0 0 24px rgba(184,59,59,0.6), 2px 2px 6px #000;
+  }
+  #liDesc { margin-top: 14px; font-size: 16px; color: #6b8e7f; letter-spacing: 4px; }
+  @keyframes inkIn {
+    0%   { opacity: 0; transform: translate(-50%,-50%) scale(1.35); filter: blur(8px); }
+    18%  { opacity: 1; }
+    35%  { transform: translate(-50%,-50%) scale(1); filter: blur(0); }
+    80%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  /* ========== 关卡完成面板 ========== */
+  #levelComplete {
+    top: 50%; left: 50%; transform: translate(-50%,-50%);
+    width: 420px; padding: 22px 26px;
+    z-index: 70; display: none; text-align: center;
+  }
+  #levelComplete h3 { color: #f5d76e; font-size: 26px; letter-spacing: 6px; margin-bottom: 12px; }
+  #levelComplete p { font-size: 15px; line-height: 2; color: #f5f0e6; }
+  #levelComplete p b { color: #f5d76e; }
+  #levelComplete .dialog-btns { justify-content: center; }
 
   /* ========== 对话/任务面板 ========== */
   #dialogPanel {
@@ -221,6 +313,7 @@
     letter-spacing: 16px; text-shadow: 0 0 20px rgba(184,59,59,0.8);
     margin-bottom: 30px;
   }
+  #deathScreen .death-btns { display: flex; gap: 16px; }
 
   /* ========== 升级提示 ========== */
   #levelUp {
@@ -264,7 +357,14 @@
     <span>防：<b id="defText">5</b></span>
     <span>灵石：<b id="goldText">0</b></span>
   </div>
+  <div id="levelBrief"></div>
   <div id="questBrief">无任务</div>
+</div>
+
+<!-- BOSS 血条（顶部中央） -->
+<div id="bossBar">
+  <div id="bossName">霜骨巨灵</div>
+  <div class="boss-track"><div id="bossFill"></div></div>
 </div>
 
 <!-- 技能栏 -->
@@ -304,11 +404,29 @@
     <div class="seal">青雲</div>
     <div id="gameSubTitle">— 试玩 · 水墨仙侠 —</div>
   </div>
+  <!-- 关卡选择 -->
+  <div id="levelSelect"></div>
   <button id="startBtn">踏入青云</button>
   <div id="opGuide">
     <b>WASD</b> 移动 ｜ <b>鼠标左键</b> 挥剑攻击 ｜ <b>1/2/3</b> 释放技能<br>
     <b>B</b> 背包 ｜ <b>E</b> 与 NPC 交互 ｜ <b>Esc</b> 菜单<br>
     <span style="color:#b83b3b;">诛妖除魔，历练道心，问鼎青云。</span>
+  </div>
+</div>
+
+<!-- 关卡入场大字 -->
+<div id="levelIntro">
+  <div id="liName"></div>
+  <div id="liDesc"></div>
+</div>
+
+<!-- 关卡完成面板 -->
+<div id="levelComplete" class="panel">
+  <h3 id="lcTitle">关卡完成</h3>
+  <p id="lcReward"></p>
+  <div class="dialog-btns">
+    <button class="btn gray" id="lcExit">退出到主菜单</button>
+    <button class="btn" id="lcContinue">继续探索</button>
   </div>
 </div>
 
@@ -335,12 +453,16 @@
   <h3>暂停</h3>
   <button class="btn" id="menuResume">继续修行</button>
   <button class="btn gray" id="menuRestart">重新开始</button>
+  <button class="btn gray" id="menuExit">回到主菜单</button>
 </div>
 
 <!-- 死亡界面 -->
 <div id="deathScreen">
   <h1>道心破碎</h1>
-  <button class="btn" id="reviveBtn" style="font-size:18px;padding:12px 40px;">重入轮回</button>
+  <div class="death-btns">
+    <button class="btn" id="deathRetry" style="font-size:18px;padding:12px 40px;">重新挑战</button>
+    <button class="btn gray" id="deathMenu" style="font-size:18px;padding:12px 40px;">回到主菜单</button>
+  </div>
 </div>
 
 <!-- 升级提示 -->
@@ -377,20 +499,60 @@ const CONFIG = {
   },
   // 敌人配置
   ENEMIES: {
-    moyao:  { name:'墨妖', hp:40,  atk:8,  speed:1.0, radius:14, exp:25, gold:3,  color:'#3a3a3a' },
-    yingsha:{ name:'影煞', hp:60,  atk:12, speed:2.0, radius:13, exp:45, gold:6,  color:'#4a6b7d' },
-    shuanggu:{name:'霜骨', hp:160, atk:22, speed:0.7, radius:20, exp:120,gold:20, color:'#6b8e7f' }
+    moyao:  { name:'墨妖',   hp:40,  atk:8,  speed:1.0, radius:14, exp:25,  gold:3,   color:'#3a3a3a' },
+    yingsha:{ name:'影煞',   hp:60,  atk:12, speed:2.0, radius:13, exp:45,  gold:6,   color:'#4a6b7d' },
+    shuanggu:{name:'霜骨',   hp:160, atk:22, speed:0.7, radius:20, exp:120, gold:20,  color:'#6b8e7f' },
+    // 新增：寒鸦（高速低血远程，发射冰锥）
+    hanya:  { name:'寒鸦',   hp:30,  atk:10, speed:2.6, radius:11, exp:35,  gold:5,   color:'#7a8a99',
+              ranged:true, range:230, shootCd:1700 },
+    // 新增：噬灵（中速中血，死亡分裂为两只小墨妖）
+    shiling:{ name:'噬灵',   hp:90,  atk:14, speed:1.4, radius:16, exp:60,  gold:8,   color:'#8a5a7d',
+              split:true },
+    // 第3关 BOSS：霜骨巨灵
+    shuanggu_boss:{ name:'霜骨巨灵', hp:520, atk:32, speed:0.55, radius:38, exp:400, gold:100,
+              color:'#8ab8c8', boss:true, shockCd:6000, shockRange:260, shockDmg:30 }
   },
   // 掉落物
   DROPS: {
     moyu:    { name:'墨玉',     desc:'漆黑如墨的灵玉，蕴含幽冥之气。', color:'#1a1a1a', icon:'玉' },
     shuanghua:{name:'霜华露',   desc:'凝结的霜华之露，服用可恢复 60 点气血。', color:'#6b8e7f', icon:'露', heal:60 },
-    jianyi:  { name:'剑意残片', desc:'残破的剑意碎片，剑修梦寐以求之物。', color:'#b83b3b', icon:'剑' }
+    jianyi:  { name:'剑意残片', desc:'残破的剑意碎片，剑修梦寐以求之物。', color:'#b83b3b', icon:'剑' },
+    // 新增：灵石（拾取直接转化为灵石货币）
+    lingshi: { name:'灵石',     desc:'蕴含精纯灵气的晶石，拾取后立即化为 15 灵石。', color:'#f5d76e', icon:'灵', gold:15 },
+    // 新增：悟道丹（背包中使用，获得大量经验）
+    wudaodan:{ name:'悟道丹',   desc:'服下可顿悟大道，获得 200 点经验。', color:'#b89b3b', icon:'丹', exp:200 }
   },
   DROP_RATE: 0.35, // 击杀掉落概率
   QUEST_TARGET: 5, // 任务目标数量
   QUEST_REWARD_EXP: 150,
-  QUEST_REWARD_GOLD: 50
+  QUEST_REWARD_GOLD: 50,
+  /* 关卡配置：
+     objective.type: kill=击杀指定敌人 N 个 / boss=讨伐 BOSS
+     enemies: 本关刷怪池；difficulty: 独立难度系数；hazard: 地形危险区（thorn荆棘/ice寒陷）
+     bgTone: 背景色调微调；reward: 通关奖励 */
+  LEVELS: [
+    { id:1, name:'青云后山', unlockLv:1, recommendLv:1, accent:'#6b8e7f',
+      desc:'初入青云，后山妖气初现',
+      objective:{ type:'kill', enemy:'moyao', count:8 },
+      enemies:['moyao','yingsha'],
+      bgTone:{ far:'#4a6b7d', mid:'#3a4f5d', tint:'rgba(107,142,127,0.06)' },
+      difficulty:1.0, hazard:null,
+      reward:{ exp:100, gold:30, drop:'jianyi' } },
+    { id:2, name:'影雾林', unlockLv:3, recommendLv:3, accent:'#4a6b7d',
+      desc:'影雾弥漫的密林，荆棘丛生',
+      objective:{ type:'kill', enemy:'yingsha', count:10 },
+      enemies:['yingsha','moyao','hanya'],
+      bgTone:{ far:'#3a5a68', mid:'#2c414e', tint:'rgba(40,60,84,0.16)' },
+      difficulty:1.3, hazard:'thorn',
+      reward:{ exp:250, gold:60, drop:'wudaodan' } },
+    { id:3, name:'霜骨荒原', unlockLv:5, recommendLv:5, accent:'#b83b3b',
+      desc:'荒原深处，霜骨巨灵沉眠于此',
+      objective:{ type:'boss', enemy:'shuanggu_boss', count:1 },
+      enemies:['shuanggu','yingsha','shiling'],
+      bgTone:{ far:'#5a6a78', mid:'#3d4f5c', tint:'rgba(168,216,240,0.10)' },
+      difficulty:1.6, hazard:'ice', hasBoss:true,
+      reward:{ exp:500, gold:120, drop:'wudaodan' } }
+  ]
 };
 
 /* ---------- 全局状态 ---------- */
@@ -417,16 +579,49 @@ const game = {
   state: 'start',    // start | playing | paused | dead
   player: null,
   enemies: [],
-  projectiles: [],   // 剑气/技能投射物
+  projectiles: [],   // 剑气/技能/敌方投射物
   drops: [],         // 掉落物
   particles: [],     // 粒子
   frostZones: [],    // 寒霜剑阵区域
+  hazards: [],       // 地形危险区（荆棘/寒陷）
   camera: { x:0, y:0 },
   lastSpawn: 0,
   quest: { active:false, target:'moyao', count:0, done:false, claimed:false },
-  bag: { moyu:0, shuanghua:0, jianyi:0 },
-  time: 0
+  bag: { moyu:0, shuanghua:0, jianyi:0, lingshi:0, wudaodan:0 },
+  time: 0,
+  // 关卡系统状态：currentLevel=0 表示自由模式
+  level: {
+    currentLevel: 0,
+    selectedLevel: 0,
+    completed: [false, false, false],
+    progress: 0,
+    objectiveDone: false,
+    bossSpawned: false,
+    bestLv: 1        // 历史最高玩家等级（用于解锁判断，持久化）
+  }
 };
+
+/* ---------- 关卡进度持久化 ---------- */
+function saveLevelProgress() {
+  try {
+    localStorage.setItem('qingyun_levels', JSON.stringify({
+      completed: game.level.completed,
+      bestLv: game.level.bestLv
+    }));
+  } catch (err) { /* 隐私模式等场景下静默失败 */ }
+}
+function loadLevelProgress() {
+  try {
+    const s = localStorage.getItem('qingyun_levels');
+    if (s) {
+      const d = JSON.parse(s);
+      if (Array.isArray(d.completed)) {
+        for (let i=0;i<3;i++) game.level.completed[i] = !!d.completed[i];
+      }
+      if (d.bestLv > 1) game.level.bestLv = d.bestLv;
+    }
+  } catch (err) { /* 数据损坏时忽略 */ }
+}
 
 /* ---------- 工具函数 ---------- */
 function dist(a, b) { const dx=a.x-b.x, dy=a.y-b.y; return Math.sqrt(dx*dx+dy*dy); }
@@ -474,6 +669,11 @@ function gainExp(amount) {
     p.maxHp += 20; p.hp = p.maxHp;
     p.maxMp += 10; p.mp = p.maxMp;
     p.atk += 4; p.def += 2;
+    // 记录历史最高等级并持久化（用于关卡解锁）
+    if (p.level > game.level.bestLv) {
+      game.level.bestLv = p.level;
+      saveLevelProgress();
+    }
     // 升级光效
     for (let i=0;i<30;i++){
       spawnParticle(p.x, p.y, '#f5d76e', rand(2,5), rand(0,Math.PI*2), rand(2,5), 800);
@@ -482,6 +682,17 @@ function gainExp(amount) {
     lu.style.opacity = '1';
     setTimeout(()=>{ lu.style.opacity='0'; }, 1200);
   }
+}
+
+// 玩家死亡统一处理
+function playerDie() {
+  const p = game.player;
+  p.hp = 0;
+  game.state = 'dead';
+  // 死亡界面按钮文案随模式变化
+  document.getElementById('deathRetry').textContent =
+    game.level.currentLevel > 0 ? '重新挑战本关' : '重新挑战';
+  document.getElementById('deathScreen').style.display = 'flex';
 }
 
 function damagePlayer(amount) {
@@ -493,32 +704,57 @@ function damagePlayer(amount) {
   for (let i=0;i<6;i++){
     spawnParticle(p.x, p.y, '#b83b3b', rand(2,4), rand(0,Math.PI*2), rand(1,3), 500);
   }
-  if (p.hp <= 0) {
-    p.hp = 0;
-    game.state = 'dead';
-    document.getElementById('deathScreen').style.display = 'flex';
-  }
+  if (p.hp <= 0) playerDie();
+}
+
+// 环境持续伤害（荆棘/寒陷），不受防御减免
+function envDamage(amount) {
+  const p = game.player;
+  p.hp -= amount;
+  p.hurtFlash = Math.max(p.hurtFlash, 80);
+  if (p.hp <= 0) playerDie();
 }
 
 /* ---------- 敌人 ---------- */
+// 难度系数：关卡模式独立于玩家等级，自由模式按等级成长
+function getDiffMul() {
+  const p = game.player;
+  if (game.level.currentLevel > 0) {
+    const d = CONFIG.LEVELS[game.level.currentLevel-1].difficulty;
+    return { hpMul: d * (1 + (p.level-1)*0.08), atkMul: d * (1 + (p.level-1)*0.05) };
+  }
+  return { hpMul: 1 + (p.level-1)*0.15, atkMul: 1 + (p.level-1)*0.1 };
+}
+
 function spawnEnemy() {
   if (game.enemies.length >= CONFIG.MAX_ENEMIES) return;
   const p = game.player;
-  // 根据等级决定敌人类型概率
-  const lvl = p.level;
   let type;
-  const r = Math.random();
-  if (lvl < 3) {
-    type = r < 0.8 ? 'moyao' : 'yingsha';
-  } else if (lvl < 6) {
-    type = r < 0.5 ? 'moyao' : (r < 0.85 ? 'yingsha' : 'shuanggu');
+  if (game.level.currentLevel > 0) {
+    // 关卡模式：只刷本关配置的敌人；目标未完成时优先刷目标敌人
+    const lv = CONFIG.LEVELS[game.level.currentLevel-1];
+    if (!game.level.objectiveDone && lv.objective.type === 'kill' && Math.random() < 0.55) {
+      type = lv.objective.enemy;
+    } else {
+      type = lv.enemies[randInt(0, lv.enemies.length-1)];
+    }
   } else {
-    type = r < 0.35 ? 'moyao' : (r < 0.7 ? 'yingsha' : 'shuanggu');
+    // 自由模式：根据等级决定敌人类型概率
+    const lvl = p.level;
+    const r = Math.random();
+    if (lvl < 3) {
+      type = r < 0.8 ? 'moyao' : 'yingsha';
+    } else if (lvl < 6) {
+      type = r < 0.5 ? 'moyao' : (r < 0.85 ? 'yingsha' : 'shuanggu');
+    } else {
+      type = r < 0.35 ? 'moyao' : (r < 0.7 ? 'yingsha' : 'shuanggu');
+    }
+    // 高等级时自由模式也会出现新敌人
+    if (lvl >= 3 && Math.random() < 0.2) type = 'hanya';
+    if (lvl >= 5 && Math.random() < 0.15) type = 'shiling';
   }
   const cfg = CONFIG.ENEMIES[type];
-  // 难度随等级提升
-  const hpMul = 1 + (lvl-1)*0.15;
-  const atkMul = 1 + (lvl-1)*0.1;
+  const { hpMul, atkMul } = getDiffMul();
   // 在玩家周围一定距离生成
   const ang = rand(0, Math.PI*2);
   const dst = rand(500, 800);
@@ -533,10 +769,44 @@ function spawnEnemy() {
     color: cfg.color,
     exp: cfg.exp, gold: cfg.gold,
     name: cfg.name,
+    ranged: !!cfg.ranged, range: cfg.range || 0,
+    split: !!cfg.split,
+    boss: false,
     hurtFlash: 0,
     frozen: 0, // 冰冻剩余 ms
-    attackCd: 0
+    attackCd: 0,
+    shockCd: 0, shockTele: 0
   });
+}
+
+// 生成 BOSS：霜骨巨灵
+function spawnBoss() {
+  const cfg = CONFIG.ENEMIES['shuanggu_boss'];
+  const p = game.player;
+  const { hpMul, atkMul } = getDiffMul();
+  const ang = rand(0, Math.PI*2);
+  const x = clamp(p.x + Math.cos(ang)*550, 80, CONFIG.WORLD_W-80);
+  const y = clamp(p.y + Math.sin(ang)*550, 80, CONFIG.WORLD_H-80);
+  game.enemies.push({
+    type: 'shuanggu_boss', x, y,
+    radius: cfg.radius,
+    hp: Math.floor(cfg.hp * hpMul), maxHp: Math.floor(cfg.hp * hpMul),
+    atk: Math.floor(cfg.atk * atkMul),
+    speed: cfg.speed,
+    color: cfg.color,
+    exp: cfg.exp, gold: cfg.gold,
+    name: cfg.name,
+    ranged: false, range: 0,
+    split: false,
+    boss: true,
+    hurtFlash: 0,
+    frozen: 0,
+    attackCd: 0,
+    shockCd: 4000,   // 首次震荡波倒计时
+    shockTele: 0     // 震荡波前摇剩余 ms（>0 表示正在蓄力）
+  });
+  game.level.bossSpawned = true;
+  showToast('霜骨巨灵已苏醒！', 2400);
 }
 
 function damageEnemy(e, amount, source='attack') {
@@ -567,10 +837,46 @@ function killEnemy(e, source) {
       showToast('任务完成，可回 NPC 交付');
     }
   }
-  // 掉落
+  // 关卡目标计数
+  if (game.level.currentLevel > 0 && !game.level.objectiveDone) {
+    const lv = CONFIG.LEVELS[game.level.currentLevel-1];
+    const obj = lv.objective;
+    if (e.type === obj.enemy) {
+      game.level.progress++;
+      if (game.level.progress >= obj.count) {
+        levelComplete();
+      } else {
+        showToast('关卡进度 ' + game.level.progress + '/' + obj.count);
+      }
+    }
+  }
+  // 噬灵死亡分裂：生成两只小墨妖
+  if (e.split) {
+    const cfg = CONFIG.ENEMIES['moyao'];
+    const { hpMul, atkMul } = getDiffMul();
+    for (let i=0;i<2;i++){
+      const mhp = Math.floor(cfg.hp * 0.5 * hpMul);
+      game.enemies.push({
+        type:'moyao',
+        x: clamp(e.x + rand(-24,24), 30, CONFIG.WORLD_W-30),
+        y: clamp(e.y + rand(-24,24), 30, CONFIG.WORLD_H-30),
+        radius: 9,
+        hp: mhp, maxHp: mhp,
+        atk: Math.floor(cfg.atk * 0.6 * atkMul),
+        speed: cfg.speed * 1.3,
+        color: cfg.color,
+        exp: Math.floor(cfg.exp * 0.5), gold: 1,
+        name: '小墨妖',
+        ranged:false, range:0, split:false, boss:false,
+        hurtFlash:0, frozen:0, attackCd:0, shockCd:0, shockTele:0
+      });
+    }
+    showToast('噬灵分裂了！');
+  }
+  // 掉落（灵石/悟道丹加入掉落池）
   if (Math.random() < CONFIG.DROP_RATE) {
-    const drops = ['moyu','shuanghua','jianyi'];
-    const pick = drops[randInt(0,2)];
+    const drops = ['moyu','shuanghua','jianyi','lingshi','wudaodan'];
+    const pick = drops[randInt(0, drops.length-1)];
     game.drops.push({ type:pick, x:e.x, y:e.y, vy:0, life:15000, bob:rand(0,Math.PI*2) });
   }
   // 标记移除
@@ -587,6 +893,21 @@ function spawnSlash(x, y, angle, damage, range, color='#f5f0e6') {
   for (let i=0;i<8;i++){
     const a = angle + rand(-0.4,0.4);
     spawnParticle(x+Math.cos(a)*20, y+Math.sin(a)*20, color, rand(1.5,3), a, rand(2,5), 400);
+  }
+}
+
+// 寒鸦冰锥（敌方投射物）
+function spawnIceBolt(e, target) {
+  const ang = Math.atan2(target.y - e.y, target.x - e.x);
+  game.projectiles.push({
+    type:'ice', x: e.x, y: e.y,
+    vx: Math.cos(ang)*4.2, vy: Math.sin(ang)*4.2,
+    damage: e.atk,
+    life: 2600, maxLife: 2600, color:'#a8d8f0'
+  });
+  // 发射粒子
+  for (let i=0;i<4;i++){
+    spawnParticle(e.x, e.y, '#a8d8f0', rand(1,2.5), ang + rand(-0.5,0.5), rand(1,2), 300);
   }
 }
 
@@ -684,11 +1005,53 @@ function doAttack() {
   }
 }
 
+/* ---------- 地形危险区 ---------- */
+// 进入关卡时生成荆棘/寒陷区域（避开玩家出生点）
+function genHazards(lv) {
+  game.hazards = [];
+  if (!lv.hazard) return;
+  const n = 4;
+  for (let i=0;i<n;i++){
+    let x, y, tries = 0;
+    do {
+      x = rand(200, CONFIG.WORLD_W-200);
+      y = rand(200, CONFIG.WORLD_H-200);
+      tries++;
+    } while (dist2(x, y, game.player.x, game.player.y) < 400*400 && tries < 20);
+    game.hazards.push({
+      x, y,
+      radius: lv.hazard === 'thorn' ? 110 : 95,
+      type: lv.hazard
+    });
+  }
+}
+
 /* ---------- 更新逻辑 ---------- */
 function update(dt) {
   if (game.state !== 'playing') return;
   game.time += dt;
   const p = game.player;
+
+  // 地形危险区判定（先算减速系数，再移动）
+  let spdMul = 1;
+  for (const hz of game.hazards) {
+    if (dist2(p.x, p.y, hz.x, hz.y) < hz.radius * hz.radius) {
+      if (hz.type === 'thorn') {
+        // 荆棘：缓慢掉血（约 8 点/秒）
+        envDamage(dt * 0.008);
+        if (Math.random() < 0.08) {
+          spawnParticle(p.x, p.y, '#b83b3b', rand(1,3), rand(0,Math.PI*2), rand(1,2), 400);
+        }
+      } else if (hz.type === 'ice') {
+        // 寒冰陷阱：减速 + 轻微冻伤（约 5 点/秒）
+        spdMul = 0.5;
+        envDamage(dt * 0.005);
+        if (Math.random() < 0.08) {
+          spawnParticle(p.x, p.y, '#a8d8f0', rand(1,3), rand(0,Math.PI*2), rand(1,2), 400);
+        }
+      }
+    }
+  }
 
   // 玩家移动
   let mvx=0, mvy=0;
@@ -699,8 +1062,8 @@ function update(dt) {
   if (mvx||mvy) {
     const len = Math.sqrt(mvx*mvx+mvy*mvy);
     mvx/=len; mvy/=len;
-    p.x += mvx * CONFIG.PLAYER_SPEED;
-    p.y += mvy * CONFIG.PLAYER_SPEED;
+    p.x += mvx * CONFIG.PLAYER_SPEED * spdMul;
+    p.y += mvy * CONFIG.PLAYER_SPEED * spdMul;
     p.facing = Math.atan2(mvy, mvx);
   }
   p.x = clamp(p.x, 30, CONFIG.WORLD_W-30);
@@ -742,15 +1105,62 @@ function update(dt) {
     if (e.frozen > 0) { e.frozen -= dt; continue; } // 冰冻不移动
     if (e.attackCd > 0) e.attackCd -= dt;
     const d = dist(p, e);
-    if (d > 10) {
-      const ang = Math.atan2(p.y-e.y, p.x-e.x);
-      e.x += Math.cos(ang) * e.speed;
-      e.y += Math.sin(ang) * e.speed;
+
+    if (e.ranged) {
+      // 寒鸦：保持距离盘旋，远程发射冰锥
+      if (d > e.range) {
+        const ang = Math.atan2(p.y-e.y, p.x-e.x);
+        e.x += Math.cos(ang) * e.speed;
+        e.y += Math.sin(ang) * e.speed;
+      } else if (d < 120) {
+        const ang = Math.atan2(e.y-p.y, e.x-p.x);
+        e.x += Math.cos(ang) * e.speed * 0.8;
+        e.y += Math.sin(ang) * e.speed * 0.8;
+      }
+      if (e.attackCd <= 0 && d < e.range + 40) {
+        e.attackCd = CONFIG.ENEMIES['hanya'].shootCd;
+        spawnIceBolt(e, p);
+      }
+    } else {
+      // 近战：追击 + 近身攻击
+      if (d > 10) {
+        const ang = Math.atan2(p.y-e.y, p.x-e.x);
+        e.x += Math.cos(ang) * e.speed;
+        e.y += Math.sin(ang) * e.speed;
+      }
+      if (d < e.radius + p.radius + 4 && e.attackCd <= 0) {
+        damagePlayer(e.atk);
+        e.attackCd = 900;
+      }
     }
-    // 攻击玩家
-    if (d < e.radius + p.radius + 4 && e.attackCd <= 0) {
-      damagePlayer(e.atk);
-      e.attackCd = 900;
+
+    // BOSS 特殊攻击：周期性范围震荡波（蓄力后爆发，伤害+击退）
+    if (e.boss) {
+      if (e.shockTele > 0) {
+        e.shockTele -= dt;
+        if (e.shockTele <= 0) {
+          // 震荡爆发
+          const bossCfg = CONFIG.ENEMIES['shuanggu_boss'];
+          if (dist(p, e) < bossCfg.shockRange) {
+            damagePlayer(bossCfg.shockDmg);
+            // 击退
+            const ka = Math.atan2(p.y-e.y, p.x-e.x);
+            p.x = clamp(p.x + Math.cos(ka)*120, 30, CONFIG.WORLD_W-30);
+            p.y = clamp(p.y + Math.sin(ka)*120, 30, CONFIG.WORLD_H-30);
+            showToast('被霜骨震荡击退！');
+          }
+          // 爆发粒子
+          for (let i=0;i<40;i++){
+            spawnParticle(e.x, e.y, '#a8d8f0', rand(2,5), rand(0,Math.PI*2), rand(3,7), 600);
+          }
+          e.shockCd = bossCfg.shockCd;
+        }
+      } else {
+        if (e.shockCd > 0) e.shockCd -= dt;
+        if (e.shockCd <= 0 && dist(p, e) < 420) {
+          e.shockTele = 900; // 蓄力前摇 900ms
+        }
+      }
     }
   }
   // 清理死亡敌人
@@ -781,6 +1191,15 @@ function update(dt) {
       } else {
         pr.life -= dt;
       }
+    } else if (pr.type === 'ice') {
+      // 寒鸦冰锥：直线飞行，命中玩家造成伤害
+      pr.x += pr.vx;
+      pr.y += pr.vy;
+      pr.life -= dt;
+      if (dist2(pr.x, pr.y, p.x, p.y) < (p.radius+6)*(p.radius+6)) {
+        damagePlayer(pr.damage);
+        pr.life = 0;
+      }
     } else {
       pr.life -= dt;
     }
@@ -810,8 +1229,15 @@ function update(dt) {
     d.bob += dt*0.005;
     if (dist(p, d) < p.radius + 18) {
       // 拾取
-      game.bag[d.type] = (game.bag[d.type]||0) + 1;
-      showToast('获得 ' + CONFIG.DROPS[d.type].name);
+      const cfg = CONFIG.DROPS[d.type];
+      if (cfg.gold) {
+        // 灵石：直接转化为灵石货币
+        p.gold += cfg.gold;
+        showToast('拾取灵石 +' + cfg.gold);
+      } else {
+        game.bag[d.type] = (game.bag[d.type]||0) + 1;
+        showToast('获得 ' + cfg.name);
+      }
       d._picked = true;
     }
   }
@@ -832,6 +1258,10 @@ function update(dt) {
 /* ---------- 渲染 ---------- */
 // 绘制水墨山水背景
 function drawBackground() {
+  // 关卡背景色调（自由模式使用默认色）
+  const tone = game.level.currentLevel > 0
+    ? CONFIG.LEVELS[game.level.currentLevel-1].bgTone : null;
+
   // 底色渐变
   const g = ctx.createLinearGradient(0,0,0,H);
   g.addColorStop(0, '#2c2c2c');
@@ -848,7 +1278,7 @@ function drawBackground() {
   for (let i=0;i<5;i++){
     const ox = -camX*0.3 + i*500 - 200;
     const oy = H*0.4 - camY*0.1;
-    drawMountain(ox, oy, 400, 200, '#4a6b7d');
+    drawMountain(ox, oy, 400, 200, tone ? tone.far : '#4a6b7d');
   }
   ctx.restore();
 
@@ -858,7 +1288,7 @@ function drawBackground() {
   for (let i=0;i<6;i++){
     const ox = -camX*0.5 + i*450 - 100;
     const oy = H*0.55 - camY*0.2;
-    drawMountain(ox, oy, 350, 160, '#3a4f5d');
+    drawMountain(ox, oy, 350, 160, tone ? tone.mid : '#3a4f5d');
   }
   ctx.restore();
 
@@ -876,6 +1306,12 @@ function drawBackground() {
     ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
   }
   ctx.restore();
+
+  // 关卡色调罩层
+  if (tone && tone.tint) {
+    ctx.fillStyle = tone.tint;
+    ctx.fillRect(0,0,W,H);
+  }
 
   // 世界边界（水墨山水围墙）
   drawWorldBoundary();
@@ -924,6 +1360,45 @@ function drawWorldBoundary() {
     drawMountain(CONFIG.WORLD_W-camX-100, sy, 250, 150, '#1a1a1a');
   }
   ctx.restore();
+}
+
+// 绘制地形危险区（荆棘/寒陷：虚线圆标记）
+function drawHazards() {
+  for (const hz of game.hazards) {
+    const s = w2s(hz.x, hz.y);
+    if (s.x < -hz.radius-50 || s.x > W+hz.radius+50 ||
+        s.y < -hz.radius-50 || s.y > H+hz.radius+50) continue;
+    const isThorn = hz.type === 'thorn';
+    ctx.save();
+    // 内部淡色填充
+    const grad = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, hz.radius);
+    if (isThorn) {
+      grad.addColorStop(0, 'rgba(184,59,59,0.10)');
+      grad.addColorStop(1, 'rgba(184,59,59,0.02)');
+    } else {
+      grad.addColorStop(0, 'rgba(168,216,240,0.10)');
+      grad.addColorStop(1, 'rgba(168,216,240,0.02)');
+    }
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, hz.radius, 0, Math.PI*2);
+    ctx.fill();
+    // 旋转虚线边界
+    ctx.setLineDash([8, 6]);
+    ctx.lineDashOffset = -game.time * 0.02;
+    ctx.strokeStyle = isThorn ? 'rgba(184,59,59,0.7)' : 'rgba(168,216,240,0.7)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, hz.radius, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // 区域名称
+    ctx.fillStyle = isThorn ? '#b83b3b' : '#a8d8f0';
+    ctx.font = '13px "KaiTi",serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(isThorn ? '荆棘' : '寒陷', s.x, s.y + 4);
+    ctx.restore();
+  }
 }
 
 // 绘制玩家（水墨风剑修小人）
@@ -1006,7 +1481,8 @@ function drawPlayer() {
 // 绘制敌人
 function drawEnemy(e) {
   const s = w2s(e.x, e.y);
-  if (s.x < -50 || s.x > W+50 || s.y < -50 || s.y > H+50) return;
+  const margin = e.boss ? 300 : 50; // BOSS 震荡波前摇圈较大，扩大渲染范围
+  if (s.x < -margin || s.x > W+margin || s.y < -margin || s.y > H+margin) return;
   ctx.save();
   ctx.translate(s.x, s.y);
 
@@ -1055,15 +1531,54 @@ function drawEnemy(e) {
     ctx.beginPath();
     ctx.arc(0, 0, 3, 0, Math.PI*2);
     ctx.fill();
+  } else if (e.type === 'hanya') {
+    // 寒鸦：三角鸟身 + 扇动双翼
+    ctx.beginPath();
+    ctx.moveTo(0, -e.radius*0.6);
+    ctx.lineTo(e.radius*0.7, e.radius*0.6);
+    ctx.lineTo(-e.radius*0.7, e.radius*0.6);
+    ctx.closePath();
+    ctx.fill();
+    // 翅膀（上下扇动）
+    ctx.strokeStyle = ctx.fillStyle;
+    ctx.lineWidth = 2;
+    const flap = Math.sin(game.time*0.02 + e.x)*0.5;
+    ctx.beginPath();
+    ctx.moveTo(-e.radius*0.3, 0);
+    ctx.lineTo(-e.radius*1.4, -e.radius*(0.3+flap));
+    ctx.moveTo(e.radius*0.3, 0);
+    ctx.lineTo(e.radius*1.4, -e.radius*(0.3+flap));
+    ctx.stroke();
+    // 眼睛
+    ctx.fillStyle = '#b83b3b';
+    ctx.beginPath();
+    ctx.arc(0, -e.radius*0.15, 2, 0, Math.PI*2);
+    ctx.fill();
+  } else if (e.type === 'shiling') {
+    // 噬灵：幽紫圆球 + 内层暗影
+    ctx.beginPath();
+    ctx.arc(0, 0, e.radius, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.beginPath();
+    ctx.arc(0, 0, e.radius*0.55, 0, Math.PI*2);
+    ctx.fill();
+    // 双眼（幽光）
+    ctx.fillStyle = '#f5d76e';
+    ctx.beginPath();
+    ctx.arc(-e.radius*0.3, -e.radius*0.1, 2.5, 0, Math.PI*2);
+    ctx.arc(e.radius*0.3, -e.radius*0.1, 2.5, 0, Math.PI*2);
+    ctx.fill();
   } else {
-    // 霜骨：大圆+冰刺
+    // 霜骨 / 霜骨巨灵：大圆+冰刺
     ctx.beginPath();
     ctx.arc(0, 0, e.radius, 0, Math.PI*2);
     ctx.fill();
     ctx.strokeStyle = '#f5f0e6';
     ctx.lineWidth = 2;
-    for (let i=0;i<6;i++){
-      const a = i*Math.PI/3;
+    const spikes = e.boss ? 10 : 6;
+    for (let i=0;i<spikes;i++){
+      const a = i*Math.PI*2/spikes;
       ctx.beginPath();
       ctx.moveTo(Math.cos(a)*e.radius, Math.sin(a)*e.radius);
       ctx.lineTo(Math.cos(a)*e.radius*1.4, Math.sin(a)*e.radius*1.4);
@@ -1071,8 +1586,16 @@ function drawEnemy(e) {
     }
     ctx.fillStyle = '#b83b3b';
     ctx.beginPath();
-    ctx.arc(0, 0, 4, 0, Math.PI*2);
+    ctx.arc(0, 0, e.boss ? 7 : 4, 0, Math.PI*2);
     ctx.fill();
+    // BOSS 头冠（金色半环）
+    if (e.boss) {
+      ctx.strokeStyle = '#f5d76e';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, e.radius*1.2, -Math.PI*0.8, -Math.PI*0.2);
+      ctx.stroke();
+    }
   }
 
   // 冰冻效果
@@ -1086,15 +1609,37 @@ function drawEnemy(e) {
 
   ctx.restore();
 
-  // 血条
+  // BOSS 震荡波蓄力预警圈（屏幕空间绘制）
+  if (e.boss && e.shockTele > 0) {
+    const bossCfg = CONFIG.ENEMIES['shuanggu_boss'];
+    const prog = 1 - e.shockTele/900; // 0→1
+    ctx.save();
+    // 外圈虚线警戒范围
+    ctx.setLineDash([10, 8]);
+    ctx.strokeStyle = 'rgba(184,59,59,' + (0.4 + prog*0.5) + ')';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, bossCfg.shockRange, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // 内圈收缩提示
+    ctx.strokeStyle = 'rgba(168,216,240,0.8)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, Math.max(1, bossCfg.shockRange * prog), 0, Math.PI*2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // 血条（BOSS 血条在屏幕顶部显示，此处仍保留头顶小血条）
   const bw = e.radius*2, bh = 4;
   ctx.fillStyle = 'rgba(0,0,0,0.6)';
   ctx.fillRect(s.x-bw/2, s.y-e.radius-10, bw, bh);
   ctx.fillStyle = '#b83b3b';
   ctx.fillRect(s.x-bw/2, s.y-e.radius-10, bw*(e.hp/e.maxHp), bh);
   // 名字
-  ctx.fillStyle = '#f5f0e6';
-  ctx.font = '11px "KaiTi",serif';
+  ctx.fillStyle = e.boss ? '#f5d76e' : '#f5f0e6';
+  ctx.font = (e.boss ? '13px' : '11px') + ' "KaiTi",serif';
   ctx.textAlign = 'center';
   ctx.fillText(e.name, s.x, s.y-e.radius-14);
 }
@@ -1203,6 +1748,24 @@ function drawProjectiles() {
       ctx.closePath();
       ctx.fill();
       ctx.restore();
+    } else if (pr.type === 'ice') {
+      // 寒鸦冰锥：菱形冰晶
+      const s = w2s(pr.x, pr.y);
+      ctx.save();
+      ctx.translate(s.x, s.y);
+      ctx.rotate(Math.atan2(pr.vy, pr.vx));
+      ctx.fillStyle = '#a8d8f0';
+      ctx.beginPath();
+      ctx.moveTo(9, 0);
+      ctx.lineTo(-4, -4);
+      ctx.lineTo(-1, 0);
+      ctx.lineTo(-4, 4);
+      ctx.closePath();
+      ctx.fill();
+      // 冰晶尾迹
+      ctx.globalAlpha = 0.4;
+      ctx.fillRect(-10, -1, 6, 2);
+      ctx.restore();
     }
   }
 }
@@ -1284,6 +1847,7 @@ function drawParticles() {
 // 主渲染
 function render() {
   drawBackground();
+  drawHazards();
   drawFrostZones();
   drawDrops();
   drawNPC();
@@ -1309,13 +1873,21 @@ function drawMinimap() {
   // 视口框
   miniCtx.strokeStyle = 'rgba(245,240,230,0.3)';
   miniCtx.strokeRect(game.camera.x*sx, game.camera.y*sy, W*sx, H*sy);
+  // 地形危险区
+  for (const hz of game.hazards) {
+    miniCtx.strokeStyle = hz.type === 'thorn' ? 'rgba(184,59,59,0.6)' : 'rgba(168,216,240,0.6)';
+    miniCtx.beginPath();
+    miniCtx.arc(hz.x*sx, hz.y*sy, Math.max(3, hz.radius*sx), 0, Math.PI*2);
+    miniCtx.stroke();
+  }
   // NPC
   miniCtx.fillStyle = '#f5d76e';
   miniCtx.fillRect(CONFIG.NPC_X*sx-3, CONFIG.NPC_Y*sy-3, 6, 6);
-  // 敌人
+  // 敌人（BOSS 用大点标记）
   miniCtx.fillStyle = '#b83b3b';
   for (const e of game.enemies) {
-    miniCtx.fillRect(e.x*sx-1, e.y*sy-1, 3, 3);
+    if (e.boss) miniCtx.fillRect(e.x*sx-3, e.y*sy-3, 6, 6);
+    else miniCtx.fillRect(e.x*sx-1, e.y*sy-1, 3, 3);
   }
   // 掉落物
   miniCtx.fillStyle = '#6b8e7f';
@@ -1345,6 +1917,35 @@ function updateHUD() {
   document.getElementById('atkText').textContent = p.atk;
   document.getElementById('defText').textContent = p.def;
   document.getElementById('goldText').textContent = p.gold;
+
+  // 关卡简报：当前关卡名 + 通关条件进度
+  const lb = document.getElementById('levelBrief');
+  if (game.level.currentLevel > 0) {
+    const lv = CONFIG.LEVELS[game.level.currentLevel-1];
+    const obj = lv.objective;
+    const objName = CONFIG.ENEMIES[obj.enemy].name;
+    lb.style.display = 'block';
+    if (game.level.objectiveDone) {
+      lb.innerHTML = '<b>'+lv.name+'</b> · <b>已通关</b>，自由探索中';
+    } else {
+      lb.innerHTML = '<b>'+lv.name+'</b> · '
+        + (obj.type==='boss' ? '讨伐' : '击杀') + '<b>'+objName+'</b> '
+        + Math.min(game.level.progress, obj.count) + '/' + obj.count;
+    }
+  } else {
+    lb.style.display = 'none';
+  }
+
+  // BOSS 血条（顶部中央）
+  const boss = game.enemies.find(e => e.boss && !e._dead);
+  const bb = document.getElementById('bossBar');
+  if (boss) {
+    bb.style.display = 'block';
+    document.getElementById('bossName').textContent = boss.name;
+    document.getElementById('bossFill').style.width = Math.max(0, boss.hp/boss.maxHp*100)+'%';
+  } else {
+    bb.style.display = 'none';
+  }
 
   // 任务简报
   const qb = document.getElementById('questBrief');
@@ -1385,7 +1986,7 @@ function renderBag() {
       const cfg = CONFIG.DROPS[key];
       const div = document.createElement('div');
       div.className = 'bag-item';
-      const canUse = cfg.heal > 0;
+      const canUse = (cfg.heal > 0) || (cfg.exp > 0);
       div.innerHTML = `
         <div class="bag-icon" style="background:${cfg.color};color:#f5f0e6;">${cfg.icon}</div>
         <div class="bag-info">
@@ -1399,8 +2000,14 @@ function renderBag() {
           if (game.bag[key] > 0) {
             game.bag[key]--;
             const p = game.player;
-            p.hp = Math.min(p.maxHp, p.hp + cfg.heal);
-            showToast('服用 '+cfg.name+'，恢复 '+cfg.heal+' 气血');
+            if (cfg.heal > 0) {
+              p.hp = Math.min(p.maxHp, p.hp + cfg.heal);
+              showToast('服用 '+cfg.name+'，恢复 '+cfg.heal+' 气血');
+            }
+            if (cfg.exp > 0) {
+              gainExp(cfg.exp);
+              showToast('服下 '+cfg.name+'，顿悟 +'+cfg.exp+' 经验');
+            }
             renderBag();
           }
         };
@@ -1424,6 +2031,9 @@ function interactNPC() {
   const accBtn = document.getElementById('dialogAccept');
   const compBtn = document.getElementById('dialogComplete');
 
+  // 通关全部关卡后的大满贯彩蛋
+  const allClear = game.level.completed[0] && game.level.completed[1] && game.level.completed[2];
+
   title.textContent = '青云门使者';
   if (!game.quest.active && !game.quest.claimed) {
     // 首次接取
@@ -1440,6 +2050,10 @@ function interactNPC() {
     compBtn.style.display = 'inline-block';
   } else {
     text.innerHTML = '道友若欲精进，可继续诛杀妖邪，历练道心。';
+    if (allClear) {
+      // 大满贯彩蛋文本
+      text.innerHTML += '<br><b style="color:#f5d76e;">三关皆破，大满贯！青云后山、影雾林、霜骨荒原皆留下道友剑痕。他日飞升仙界，莫忘后山斩妖之情——你已是青云门不朽的传奇！</b>';
+    }
     accBtn.style.display = 'none';
     compBtn.style.display = 'none';
   }
@@ -1501,8 +2115,132 @@ function toggleMenu() {
 document.getElementById('menuResume').onclick = toggleMenu;
 document.getElementById('menuRestart').onclick = () => {
   document.getElementById('menuPanel').style.display = 'none';
-  startGame();
+  startGame(game.level.currentLevel); // 重开当前模式/关卡
 };
+document.getElementById('menuExit').onclick = () => {
+  document.getElementById('menuPanel').style.display = 'none';
+  exitToMenu();
+};
+
+/* ---------- 关卡系统 ---------- */
+// 关卡目标文本
+function objectiveText(lv) {
+  const obj = lv.objective;
+  const nm = CONFIG.ENEMIES[obj.enemy].name;
+  return (obj.type === 'boss' ? '讨伐 ' : '击杀 ') + nm + ' ×' + obj.count;
+}
+
+// 关卡是否已解锁：历史最高等级达标，或已通关前一关
+function isLevelUnlocked(i) {
+  const lv = CONFIG.LEVELS[i];
+  const maxLv = Math.max(game.level.bestLv, game.player ? game.player.level : 1);
+  if (maxLv >= lv.unlockLv) return true;
+  if (i > 0 && game.level.completed[i-1]) return true;
+  return false;
+}
+
+// 渲染开始界面的关卡选择卡片
+function renderLevelSelect() {
+  const wrap = document.getElementById('levelSelect');
+  wrap.innerHTML = '';
+  // 自由修行卡（始终可选，对应 currentLevel=0）
+  const free = document.createElement('div');
+  free.className = 'lv-card' + (game.level.selectedLevel === 0 ? ' selected' : '');
+  free.innerHTML =
+    '<div class="lv-name">自由修行</div>' +
+    '<div class="lv-req">无限制</div>' +
+    '<div class="lv-obj">无拘闯荡<br>历练道心</div>';
+  free.onclick = () => { game.level.selectedLevel = 0; renderLevelSelect(); };
+  wrap.appendChild(free);
+  // 三个关卡卡片
+  CONFIG.LEVELS.forEach((lv, i) => {
+    const unlocked = isLevelUnlocked(i);
+    const done = game.level.completed[i];
+    const card = document.createElement('div');
+    card.className = 'lv-card'
+      + (unlocked ? '' : ' locked')
+      + (game.level.selectedLevel === lv.id ? ' selected' : '');
+    let inner =
+      '<div class="lv-name" style="color:'+lv.accent+';">'+lv.name+'</div>' +
+      '<div class="lv-req">推荐 '+lv.recommendLv+' 阶</div>' +
+      '<div class="lv-obj">'+objectiveText(lv)+'</div>';
+    if (!unlocked) inner += '<div class="lv-lock">需达到 '+lv.unlockLv+' 阶</div>';
+    if (done) inner += '<div class="lv-seal">已通关</div>';
+    card.innerHTML = inner;
+    if (unlocked) {
+      card.onclick = () => { game.level.selectedLevel = lv.id; renderLevelSelect(); };
+    }
+    wrap.appendChild(card);
+  });
+  // 开始按钮文案随选中关卡变化
+  const btn = document.getElementById('startBtn');
+  if (game.level.selectedLevel > 0) {
+    btn.textContent = '进入 ' + CONFIG.LEVELS[game.level.selectedLevel-1].name;
+  } else {
+    btn.textContent = '踏入青云';
+  }
+}
+
+// 关卡入场大字动画
+function showLevelIntro(lv) {
+  const el = document.getElementById('levelIntro');
+  document.getElementById('liName').textContent = lv.name;
+  document.getElementById('liDesc').textContent = lv.desc + ' · ' + objectiveText(lv);
+  el.classList.remove('show');
+  void el.offsetWidth; // 触发重排以重启动画
+  el.classList.add('show');
+}
+
+// 通关处理：结算奖励、标记完成、弹出通关面板
+function levelComplete() {
+  const lv = CONFIG.LEVELS[game.level.currentLevel-1];
+  game.level.objectiveDone = true;
+  game.level.completed[game.level.currentLevel-1] = true;
+  saveLevelProgress();
+  // 发放通关奖励
+  gainExp(lv.reward.exp);
+  game.player.gold += lv.reward.gold;
+  if (lv.reward.drop) {
+    game.bag[lv.reward.drop] = (game.bag[lv.reward.drop] || 0) + 1;
+  }
+  document.getElementById('bossBar').style.display = 'none';
+  document.getElementById('lcTitle').textContent = lv.name + ' · 通关';
+  document.getElementById('lcReward').innerHTML =
+    '获得奖励：<b>'+lv.reward.exp+'</b> 经验、<b>'+lv.reward.gold+'</b> 灵石'
+    + (lv.reward.drop ? '、<b>'+CONFIG.DROPS[lv.reward.drop].name+'</b>' : '');
+  document.getElementById('levelComplete').style.display = 'block';
+  game.state = 'paused';
+}
+// 通关面板：继续探索（留在本关自由刷怪）
+document.getElementById('lcContinue').onclick = () => {
+  document.getElementById('levelComplete').style.display = 'none';
+  game.state = 'playing';
+  showToast('继续在此关自由探索');
+};
+// 通关面板：退出到主菜单
+document.getElementById('lcExit').onclick = () => {
+  exitToMenu();
+};
+
+// 回到主菜单（开始界面）
+function exitToMenu() {
+  game.state = 'start';
+  mouseDown = false;
+  saveLevelProgress();
+  // 隐藏全部游戏内 UI
+  document.getElementById('levelComplete').style.display = 'none';
+  document.getElementById('deathScreen').style.display = 'none';
+  document.getElementById('dialogPanel').style.display = 'none';
+  document.getElementById('bagPanel').style.display = 'none';
+  document.getElementById('menuPanel').style.display = 'none';
+  document.getElementById('bossBar').style.display = 'none';
+  document.getElementById('hud').style.display = 'none';
+  document.getElementById('skillBar').style.display = 'none';
+  document.getElementById('minimap').style.display = 'none';
+  document.getElementById('hint').style.display = 'none';
+  document.getElementById('startScreen').style.display = 'flex';
+  renderLevelSelect();
+}
 
 /* ---------- 事件绑定 ---------- */
 window.addEventListener('keydown', (e) => {
@@ -1514,9 +2252,11 @@ window.addEventListener('keydown', (e) => {
       const menu = document.getElementById('menuPanel');
       const bag = document.getElementById('bagPanel');
       const dlg = document.getElementById('dialogPanel');
+      const lc = document.getElementById('levelComplete');
       if (menu.style.display==='block') toggleMenu();
       else if (bag.style.display==='block') toggleBag();
       else if (dlg.style.display==='block') { dlg.style.display='none'; game.state='playing'; }
+      else if (lc.style.display==='block') { lc.style.display='none'; game.state='playing'; }
     }
     return;
   }
@@ -1542,18 +2282,25 @@ window.addEventListener('mouseup', (e) => {
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
 /* ---------- 开始/重启游戏 ---------- */
-function startGame() {
+function startGame(levelId=0) {
   game.player = createPlayer();
   game.enemies = [];
   game.projectiles = [];
   game.drops = [];
   game.particles = [];
   game.frostZones = [];
+  game.hazards = [];
   game.camera = { x: game.player.x - W/2, y: game.player.y - H/2 };
   game.lastSpawn = 0;
   game.time = 0;
   game.quest = { active:false, target:'moyao', count:0, done:false, claimed:false };
-  game.bag = { moyu:0, shuanghua:0, jianyi:0 };
+  game.bag = { moyu:0, shuanghua:0, jianyi:0, lingshi:0, wudaodan:0 };
+  // 关卡状态初始化
+  game.level.currentLevel = levelId;
+  game.level.selectedLevel = levelId;
+  game.level.progress = 0;
+  game.level.objectiveDone = false;
+  game.level.bossSpawned = false;
   game.state = 'playing';
   // 显示 UI
   document.getElementById('startScreen').style.display = 'none';
@@ -1565,24 +2312,38 @@ function startGame() {
   document.getElementById('dialogPanel').style.display = 'none';
   document.getElementById('bagPanel').style.display = 'none';
   document.getElementById('menuPanel').style.display = 'none';
-  // 初始刷几只怪
-  for (let i=0;i<4;i++) spawnEnemy();
+  document.getElementById('levelComplete').style.display = 'none';
+  document.getElementById('bossBar').style.display = 'none';
+  if (levelId > 0) {
+    // 进入关卡：生成地形危险区、刷本关敌人、BOSS 关生成 BOSS、播放入场动画
+    const lv = CONFIG.LEVELS[levelId-1];
+    genHazards(lv);
+    for (let i=0;i<5;i++) spawnEnemy();
+    if (lv.hasBoss) spawnBoss();
+    showLevelIntro(lv);
+  } else {
+    // 自由模式：初始刷几只怪
+    for (let i=0;i<4;i++) spawnEnemy();
+  }
+  updateHUD();
 }
 
-document.getElementById('startBtn').onclick = startGame;
-document.getElementById('reviveBtn').onclick = () => {
-  // 重生：保留等级和背包，重置位置和 HP
-  const p = game.player;
-  p.x = CONFIG.WORLD_W/2; p.y = CONFIG.WORLD_H/2;
-  p.hp = p.maxHp; p.mp = p.maxMp;
-  p.hurtFlash = 0;
-  game.enemies = [];
-  game.projectiles = [];
-  game.frostZones = [];
-  game.state = 'playing';
-  document.getElementById('deathScreen').style.display = 'none';
-  showToast('道心重聚，再入红尘');
+// 开始按钮：进入当前选中的关卡（0=自由模式）
+document.getElementById('startBtn').onclick = () => {
+  startGame(game.level.selectedLevel);
 };
+// 死亡：重新挑战本关（或自由模式重来）
+document.getElementById('deathRetry').onclick = () => {
+  startGame(game.level.currentLevel);
+};
+// 死亡：回到主菜单
+document.getElementById('deathMenu').onclick = () => {
+  exitToMenu();
+};
+
+/* ---------- 初始化：读取关卡进度并渲染选关界面 ---------- */
+loadLevelProgress();
+renderLevelSelect();
 
 /* ---------- 主循环 ---------- */
 let lastTime = performance.now();
