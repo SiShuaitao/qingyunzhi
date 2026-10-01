@@ -106,25 +106,44 @@
     updateBossBar();
   }
 
-  /* 技能栏：解锁状态 + 冷却遮罩 */
+  /* 冷却视觉统一驱动：遮罩高度 + 居中剩余秒数；仅状态变化时写 DOM */
+  function setCooldownUI(slot, ratio, numText) {
+    var mask = slot.querySelector('.cd-mask'), num = slot.querySelector('.cd-num');
+    var active = ratio > 0;
+    if (active) {
+      if (mask._shown !== true) { mask._shown = true; mask.style.display = 'block'; }
+      var h = ratio * 100;
+      if (mask._h == null || Math.abs(mask._h - h) > 0.6) { mask._h = h; mask.style.height = h + '%'; }
+    } else if (mask._shown !== false) {
+      mask._shown = false; mask._h = null; mask.style.display = 'none';
+    }
+    if (active) {
+      if (num._shown !== true) { num._shown = true; num.style.display = 'block'; }
+      if (num._qv !== numText) { num._qv = numText; num.textContent = numText; }
+    } else if (num._shown !== false) {
+      num._shown = false; num._qv = null;
+      num.textContent = ''; num.style.display = 'none';
+    }
+  }
+
+  /* 技能栏：解锁状态 + 冷却遮罩 + 冷却数字 */
   function updateSkillBar() {
     var p = game.player;
+    /* 普攻 L：attackCD 仅 340ms，显示一位小数 */
+    var slotL = $('skillBar').querySelector('.skill:not([id])');
+    var ratioL = Math.max(0, p.attackCD / CFG.BASIC_ATTACK.cd);
+    setCooldownUI(slotL, ratioL, ratioL > 0 ? (p.attackCD / 1000).toFixed(1) : '');
     [1, 2, 3].forEach(function (i) {
-      var slot = $('skill' + i), mask = slot.querySelector('.cd-mask');
-      var sk = CFG.SKILLS[i];
+      var slot = $('skill' + i), sk = CFG.SKILLS[i];
       if (p.skills[i]) {
         slot.classList.remove('locked'); slot.classList.add('ready');
         var ratio = Math.max(0, p.skillCD[i] / sk.cd);
-        if (ratio > 0) {
-          if (mask._shown !== true) { mask._shown = true; mask.style.display = 'block'; }
-          var h = ratio * 100;
-          if (mask._h == null || Math.abs(mask._h - h) > 0.6) { mask._h = h; mask.style.height = h + '%'; }
-        } else if (mask._shown !== false) {
-          mask._shown = false; mask._h = null; mask.style.display = 'none';
-        }
+        /* 向上取整：刚释放时显示完整秒数，逐秒递减，结束归零消失 */
+        setCooldownUI(slot, ratio, ratio > 0 ? String(Math.ceil(p.skillCD[i] / 1000)) : '');
       } else {
         slot.classList.add('locked'); slot.classList.remove('ready');
-        if (mask._shown !== false) { mask._shown = false; mask.style.display = 'none'; }
+        /* 未习得：不显示任何冷却元素 */
+        setCooldownUI(slot, 0, '');
       }
     });
   }
@@ -196,6 +215,15 @@
     return blocks[blocks.length - 1];
   }
 
+  /* 严格判定：是否存在条件真正满足的对话块（无 if 的块恒有效）。
+     返回 false 时不应打开对话——否则 fallback 块会提前置旗、污染后续计数 */
+  function hasValidBlock(npc) {
+    var blocks = QY.DIALOGUES[npc.id];
+    for (var i = 0; i < blocks.length; i++) if (condOk(blocks[i].if)) return true;
+    return false;
+  }
+  UI.hasValidDialogue = hasValidBlock;
+
   UI.openDialogue = function (npc) {
     var block = pickBlock(npc);
     game.dialogue = { npc: npc, block: block, li: 0, chars: 0 };
@@ -226,7 +254,7 @@
     var d = game.dialogue;
     if (!d) return;
     var npc = d.npc, block = d.block;
-    /* 村民首次交谈置旗（影响后续对话块） */
+    /* 村民交谈置旗（影响后续对话块）；计数去重统一由 core 按 talkedIds 处理 */
     if (npc.id.indexOf('villager') === 0) QY.setFlag('talked_' + npc.id);
     /* 块动作：接受支线 */
     if (block.action && block.action.indexOf('accept:') === 0) {
@@ -234,7 +262,7 @@
     }
     $('dialogue').style.display = 'none';
     game.dialogue = null;
-    /* 交谈进度（唯一上报点） */
+    /* 交谈进度（唯一上报点）；同一 NPC 在同一步只计一次，由 record 去重 */
     QY.progressEvent('talk', { npc: npc });
   };
 

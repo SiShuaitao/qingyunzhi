@@ -133,6 +133,12 @@
   .skill .sk-cost { color: #6b8e7f; font-size: 10px; }
   .skill .cd-mask { position: absolute; left: 0; right: 0; bottom: 0;
     background: rgba(0,0,0,.72); pointer-events: none; }
+  /* 冷却剩余秒数：居中大字 */
+  .skill .cd-num { position: absolute; left: 0; right: 0; top: 50%;
+    transform: translateY(-50%); text-align: center;
+    font-size: 24px; font-weight: bold; color: #f5f0e6; letter-spacing: 0;
+    text-shadow: 0 0 6px #000, 0 0 3px #000; pointer-events: none;
+    display: none; }
   .skill.ready { border-color: #b83b3b; box-shadow: 0 0 8px rgba(184,59,59,.35); }
   .skill.locked { opacity: .35; filter: grayscale(1); }
 
@@ -291,10 +297,10 @@
 
   <!-- 技能栏 -->
   <div id="skillBar" class="panel hidden">
-    <div class="skill ready"><span class="sk-key">L</span><span class="sk-name">剑气</span><span class="sk-cost">普攻</span></div>
-    <div class="skill locked" id="skill1"><span class="sk-key">1</span><span class="sk-name">霜刃斩</span><span class="sk-cost">灵8</span><div class="cd-mask hidden"></div></div>
-    <div class="skill locked" id="skill2"><span class="sk-key">2</span><span class="sk-name">寒霜剑阵</span><span class="sk-cost">灵25</span><div class="cd-mask hidden"></div></div>
-    <div class="skill locked" id="skill3"><span class="sk-key">3</span><span class="sk-name">万剑归宗</span><span class="sk-cost">灵50</span><div class="cd-mask hidden"></div></div>
+    <div class="skill ready"><span class="sk-key">L</span><span class="sk-name">剑气</span><span class="sk-cost">普攻</span><div class="cd-mask" style="display:none"></div><div class="cd-num" style="display:none"></div></div>
+    <div class="skill locked" id="skill1"><span class="sk-key">1</span><span class="sk-name">霜刃斩</span><span class="sk-cost">灵8</span><div class="cd-mask" style="display:none"></div><div class="cd-num" style="display:none"></div></div>
+    <div class="skill locked" id="skill2"><span class="sk-key">2</span><span class="sk-name">寒霜剑阵</span><span class="sk-cost">灵25</span><div class="cd-mask" style="display:none"></div><div class="cd-num" style="display:none"></div></div>
+    <div class="skill locked" id="skill3"><span class="sk-key">3</span><span class="sk-name">万剑归宗</span><span class="sk-cost">灵50</span><div class="cd-mask" style="display:none"></div><div class="cd-num" style="display:none"></div></div>
   </div>
 
   <!-- 小地图 -->

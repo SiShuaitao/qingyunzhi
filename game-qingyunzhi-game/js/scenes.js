@@ -93,7 +93,14 @@
       var d = u.dist(p.x, p.y, n.x, n.y);
       if (d < bd) { bd = d; best = n; }
     });
-    if (best) QY.UI.openDialogue(best);
+    if (!best) return;
+    /* 当前没有条件成立的对话块时不打开（如“打听村民”步骤之前），
+       防止提前置旗导致正式步骤中该村民无法计数 */
+    if (!QY.UI.hasValidDialogue(best)) {
+      QY.UI.toast(best.id.indexOf('villager') === 0 ? '先去听村长说明来意吧' : '对方此刻无暇叙话');
+      return;
+    }
+    QY.UI.openDialogue(best);
   };
 
   /* ============================================================
@@ -163,6 +170,10 @@
 
   /* ---------------- 阴谋线索光点 ---------------- */
   function updateClues() {
+    /* 仅当主线推进到 q4 第二步“寻得三处阴谋线索”时线索才可被拾取；
+       此前（杀影煞阶段）路过线索不应提前消耗，否则后面线索不足 */
+    var mq = QY.activeMain();
+    if (!mq || mq.id !== 'q4' || QY.stepIdxOf('q4') !== 1) return;
     var p = game.player;
     game.clues.forEach(function (c) {
       if (!c.done && u.dist(p.x, p.y, c.x, c.y) < 32) {
@@ -203,8 +214,10 @@
     if (q.id === 'q4' && idx === 2 && sp && sp.leader && !QY.flag('leader_dead') && !aliveOf('yingsha_leader')) {
       queuePending('yingsha_leader', sp.leader.x, sp.leader.y, '影煞头领拦住了去路！');
     }
-    /* 终章：登上祭坛 → 巨灵苏醒 */
-    if (q.id === 'q6' && sp) {
+    /* 终章：登上祭坛 → 巨灵苏醒（仅在祭坛场景运行：荒原场景的 special
+       无 trigger/boss，此前每帧访问 sp.trigger.x 都抛 TypeError，
+       异常被主循环捕获但每秒抛出约60次，造成获得技能3后明显卡顿） */
+    if (q.id === 'q6' && sp && game.sceneId === 'altar') {
       if (idx === 0 && !QY.flag('trigger_reached')) {
         var tg = sp.trigger;
         if (u.dist(game.player.x, game.player.y, tg.x, tg.y) < tg.r) {

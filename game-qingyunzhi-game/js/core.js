@@ -147,17 +147,27 @@
     var q = activeMain();
     if (q) {
       var step = curStep(q);
-      if (stepMatch(step, kind, p)) record(q, step);
+      if (stepMatch(step, kind, p)) record(q, step, p);
     }
     /* 支线任务同步判定 */
     for (var sid in game.sides) {
       if (game.sides[sid] !== 'active') continue;
       var sq = QY.QUESTS[sid], ss = sq.steps[stepIdxOf(sid)];
-      if (stepMatch(ss, kind, p)) record(sq, ss);
+      if (stepMatch(ss, kind, p)) record(sq, ss, p);
     }
   };
   /* 记录本步进度，达到 count 则 completeStep */
-  function record(q, step) {
+  function record(q, step, p) {
+    /* talk 步骤按 NPC 身份去重：同一 NPC 在同一步只计一次。
+       talkedIds 随 game.quest 持久化，读档后仍生效；
+       旧存档无此数据时视为空，卡住的“2/3”可与任一未计村民交谈后自愈 */
+    if (step.type === 'talk' && p && p.npc) {
+      if (!game.quest.talkedIds) game.quest.talkedIds = {};
+      var ids0 = game.quest.talkedIds[q.id];
+      if (!ids0) ids0 = game.quest.talkedIds[q.id] = [];
+      if (ids0.indexOf(p.npc.id) >= 0) return;
+      ids0.push(p.npc.id);
+    }
     if (!step.count) { completeStep(q); return; }
     var key = q.id;
     game.quest.progress[key] = (game.quest.progress[key] || 0) + 1;
@@ -170,6 +180,8 @@
     var idx = stepIdxOf(q.id) + 1;
     game.quest.stepIdx[q.id] = idx;
     game.quest.progress[q.id] = 0;
+    /* 新步骤新计数：清空本任务的已谈 NPC 列表 */
+    if (game.quest.talkedIds) delete game.quest.talkedIds[q.id];
     questDirty(); // 步骤切换
     if (idx >= q.steps.length) completeQuest(q);
     else QY.UI.toast('任务进展 · ' + q.steps[idx].desc);
@@ -265,10 +277,11 @@
         }
       }
     } else if (sk.type === 'frost') {
-      /* 寒霜剑阵：鼠标位置，冰冻减速 + 持续伤害 */
+      /* 寒霜剑阵：鼠标位置，冰冻减速 + 持续伤害
+         game.time 单位为秒，duration 配置为毫秒，需换算，否则剑阵近一小时不消失 */
       game.effects.push({
         kind: 'frost', x: game.mouse.wx, y: game.mouse.wy, r: sk.radius,
-        until: game.time + sk.duration, tickT: 0, dmg: Math.round(p.atk * sk.damage) + sk.fix
+        until: game.time + sk.duration / 1000, tickT: 0, dmg: Math.round(p.atk * sk.damage) + sk.fix
       });
       QY.UI.toast('寒霜剑阵已布下');
     } else if (sk.type === 'rain') {

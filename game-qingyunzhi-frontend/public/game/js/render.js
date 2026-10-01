@@ -293,7 +293,12 @@
     if (q) {
       var step = QY.curStep(q);
       if (step.type === 'talk') {
-        if (step.target === n.id || (step.target === n.group && n.group)) return '!';
+        if (step.target === n.id || (step.target === n.group && n.group)) {
+          /* 已计入本步的 NPC 不再显示！（talkedIds 持久去重列表） */
+          var ids = game.quest.talkedIds && game.quest.talkedIds[q.id];
+          if (ids && ids.indexOf(n.id) >= 0) return null;
+          return '!';
+        }
       }
     }
     if (n.id === 'yaotong') {
@@ -472,7 +477,8 @@
   function drawGroundEffects() {
     game.effects.forEach(function (f) {
       if (f.kind !== 'frost') return;
-      var k = QY.utils.clamp((f.until - game.time) / 400, 0, 1);
+      /* 退场渐隐：剩余寿命不足 0.4 秒时开始淡化（until 与 game.time 均为秒） */
+      var k = QY.utils.clamp((f.until - game.time) / 0.4, 0, 1);
       ctx.fillStyle = 'rgba(150,195,215,.22)';
       ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = 'rgba(220,240,248,' + (.5 + k * .4) + ')'; ctx.lineWidth = 2;
